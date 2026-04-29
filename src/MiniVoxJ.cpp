@@ -16,6 +16,7 @@ constexpr float Amp = 0.9f * 32767.0f; // 振幅
 static constexpr uint16_t KANA_BEGIN = 0x30A1; // カタカナの最初 ァ
 static constexpr uint16_t KANA_END   = 0x30F3; // カタカナの最後 ン
 static constexpr uint16_t LONG_MARK  = 0x30FC; // 長音記号 ※使用しないがいちおうサポート
+static constexpr uint16_t ACCENT_MARK = 0x0027; // アクセント記号 '
 
 // カナ → モーラ表 
 static constexpr Mora KANA_TO_MORA[83] = {
@@ -195,17 +196,25 @@ static Mora twoCharMora(const Mora &m1, const Mora &m2)
 // カナ列をモーラ列に変換
 // kana: カナ列
 // return: モーラ列
-static std::vector<Mora> convertKana2Mora(const std::vector<uint16_t>kanas)
+static Phrase convertKana2Mora(const std::vector<uint16_t>& kanas)
 {
-    std::vector<Mora> moras;
+    Phrase phrase;
+    phrase.accent = -1;
+
     for (size_t i = 0; i < kanas.size(); i++) {
         const uint16_t c = kanas[i];
         Mora m;
 
+        // アクセント記号 ' の場合、直前のモーラがアクセント核になる
+        if (c == ACCENT_MARK) {
+            if (phrase.moras.size() == 0) continue; // 前のモーラがなければ無効
+            phrase.accent = phrase.moras.size() - 1;
+            continue;
+        }
         // 長音記号 ー
         if (c == LONG_MARK) {
-            if (moras.size() == 0) continue; // 前のモーラがなければ無効
-            const Mora& last = moras.back();
+            if (phrase.moras.size() == 0) continue; // 前のモーラがなければ無効
+            const Mora& last = phrase.moras.back();
             // 前のンを伸ばす
             if (last.c == Nn) {
                 m.c = Nn;
@@ -249,10 +258,82 @@ static std::vector<Mora> convertKana2Mora(const std::vector<uint16_t>kanas)
             continue;
         }
         // モーラを追加
-        moras.push_back(m);
-        continue;
+        phrase.moras.push_back(m);
     }
-    return moras;
+    return phrase;
+}
+
+// 区切り文字かどうか
+// ch: 文字
+// return: 区切り文字ならtrue、そうでなければfalse
+static bool isDelimiter(uint16_t ch) {
+    switch (ch) {
+        case 0x0020: // 半角スペース
+        case 0x3000: // 全角スペース
+        case 0x3001: // 、
+        case 0x3002: // 。
+        case 0x002C: // ,
+        case 0x002E: // .
+        case 0x003F: // ?
+        case 0xFF1F: // ？
+        case 0x002F: // /
+            return true;
+        default:
+            return false;
+    }
+}
+
+// ポーズ時間
+// ch: 区切り文字
+// return: ポーズ時間[msec]
+static int pauseTime(uint16_t ch) {
+    switch (ch) {
+        case 0x0020: // 半角スペース
+        case 0x3000: // 全角スペース
+            return 100;
+        case 0x3001: // 、
+        case 0x002C: // ,
+            return 300;
+        case 0x3002: // 。
+        case 0x002E: // .
+        case 0x003F: // ?
+        case 0xFF1F: // ？
+            return 1000;
+        case 0x002F: // /
+        default:
+            return 0;
+    }
+}
+
+// UTF-16の文字列をアクセント句の列に変換
+// utf16str: UTF-16の文字列
+// return: アクセント句の列
+static std::vector<Phrase> convertStr2Phrases(const std::vector<uint16_t>& utf16str)
+{
+    std::vector<Phrase> phrases;
+    std::vector<uint16_t> word;
+
+    // 1文字ずつ処理
+    for (uint16_t ch : utf16str) {
+        // 区切り文字の場合
+        if (isDelimiter(ch) && !word.empty()) {
+            Phrase phr = convertKana2Mora(word); // カナ列 → モーラ列
+            phr.delimiter = ch; // 区切り文字
+            phrases.push_back(phr);
+            word.clear();
+        }
+        // 区切り文字でない場合、単語に1文字追加
+        else {
+            word.push_back(ch);
+        }
+    }
+    // 最後のアクセント句が区切り文字なしで終わった場合
+    if (!word.empty()) {
+        Phrase phr = convertKana2Mora(word); // カナ列 → モーラ列
+        phr.delimiter = 0; // 区切り文字なし
+        phrases.push_back(phr);
+    }
+    return phrases;
 }
 
 // モーラ列をフォルマント区間列に変換
@@ -324,6 +405,27 @@ static std::vector<FormantSeg> convertMora2FormantSeg(std::vector<Mora> moras)
     return segs;
 }
 
+// アクセント句列をフォルマント区間列に変換
+// phrases: アクセント句列
+// returns: フォルマント区間列
+static std::vector<FormantSeg> convertPhrases2FormantSeg(std::vector<Phrase> phrases)
+{
+    std::vector<FormantSeg> segs;
+
+    for (const Phrase& phr : phrases)
+    {
+        // モーラ列 → フォルマント区間列
+        std::vector<FormantSeg> phr_segs = convertMora2FormantSeg(phr.moras);
+        // ポーズの追加
+        if (phr.delimiter != 0) {
+            FormantSeg pause = { &Silence, pauseTime(phr.delimiter) };
+            phr_segs.push_back(pause);
+        }
+        segs.insert(segs.end(), phr_segs.begin(), phr_segs.end());
+    }
+    return segs;
+}
+
 // フォルマントパラメータの線形補間
 // a: 現在のフォルマントパラメータ
 // b: 次のフォルマントパラメータ
@@ -352,13 +454,13 @@ static FormantParams interpolate(const FormantParams& a, const FormantParams& b,
 bool MiniVoxJ::setText(const char* utf8_str, int max)
 {
     // UTF-8をデコード (uint16_t型1個で1文字)
-    std::vector<uint16_t> kanas = utf8_decode(utf8_str, max);
+    std::vector<uint16_t> utf16str = utf8_decode(utf8_str, max);
 
-    // カナ列をモーラ列に
-    std::vector<Mora> moras = convertKana2Mora(kanas);
+    // 文字列をアクセント句列に
+    std::vector<Phrase> phrases = convertStr2Phrases(utf16str);
 
-    // モーラ列を音価列に
-    _formantSegs = convertMora2FormantSeg(moras);
+    // アクセント句列をフォルマント区間列に
+    _formantSegs = convertPhrases2FormantSeg(phrases);
 
     // 変数の初期化
     _seg_cnt = 0;

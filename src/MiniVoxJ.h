@@ -48,6 +48,13 @@ struct Mora
     Vowel v;     // 母音
 };
 
+// アクセント句
+struct Phrase {
+    std::vector<Mora> moras;    // モーラ列
+    uint16_t delimiter;         // 区切り文字
+    int accent;                 // アクセント核の位置 (0～moras.size()-1)
+};
+
 // 励振音源の種類
 enum class SourceType {
     Impulse,    // インパルス
