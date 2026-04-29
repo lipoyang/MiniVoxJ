@@ -91,8 +91,8 @@ public:
     // f: フォルマント周波数 [Hz]
     // bw: 帯域幅 [Hz]
     void set(float f, float bw) {
-        float R = expf(-PI * bw / fs);
-        b1 = -2.0f * R * cosf(2.0f * PI * f / fs);
+        float R = expf(-F_PI * bw / fs);
+        b1 = -2.0f * R * cosf(2.0f * F_PI * f / fs);
         b2 = R * R;
         a0 = 1.0f + b1 + b2; // ゲイン調整（簡易版）
     }
@@ -108,7 +108,7 @@ public:
     }
 
 private:
-    const float PI = static_cast<float>(M_PI);
+    const float F_PI = static_cast<float>(M_PI);
     const float fs;    // サンプリング周波数[Hz]
     float b1, b2, a0;  // フィルタ係数
     float z1, z2;      // フィルタの状態（遅延要素）
@@ -193,8 +193,9 @@ public:
     int  getStatus() const { return _status; }
     int  getSampleCnt() const { return _total_cnt; }
 
-    const int NO_ERROR = 0;
-    const int END_OF_DATA = 1;
+    const int PROCESSING = 0;   // 処理中
+    const int COMPLETE = 1;     // 合成完了
+    const int ERROR = -1;       // エラー
 
 private:
     // 時間[msec]をサンプル数に換算
@@ -221,7 +222,7 @@ private:
     size_t _seg_cnt = 0;// フォルマント区間列カウント
     int _sub_cnt = 0;   // フォルマント区間サンプルカウント
     int _total_cnt = 0; // 累計サンプルカウント
-    int _status = 0;    // ステータス
+    int _status = COMPLETE;// ステータス
     float _gain = 1.0f; // ゲイン
     SourceType _source = SourceType::Impulse; // 励振音源の種類
     ImpulseGen _impulse;// インパルス音源

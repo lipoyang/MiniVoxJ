@@ -364,7 +364,7 @@ bool MiniVoxJ::setText(const char* utf8_str, int max)
     _seg_cnt = 0;
     _sub_cnt = 0;
     _total_cnt = 0;
-    _status = NO_ERROR;
+    _status = PROCESSING;
     _gain = 1.0f;
     _source = SourceType::Impulse;
 
@@ -378,7 +378,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
 {
     // 処理中のフォルマントと次のフォルマント(あれば)
     if (_seg_cnt >= _formantSegs.size()) {
-        _status = END_OF_DATA;
+        _status = COMPLETE;
         return 0;
     }
     const FormantParams* cur = _formantSegs[_seg_cnt].params;
@@ -431,7 +431,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
             _seg_cnt++;
             if (_seg_cnt >= _formantSegs.size()) {
                 // 全ての音声合成が完了
-                _status = END_OF_DATA;
+                _status = COMPLETE;
                 return cnt + 1;
             } else {
                 // 次のフォルマント区間へ

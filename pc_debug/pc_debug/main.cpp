@@ -23,7 +23,7 @@ int main(void)
         wav.write(buffer, size);
         if (size < BUFF_SIZE) {
             int status = vox.getStatus();
-            if (status == vox.END_OF_DATA) {
+            if (status == vox.COMPLETE) {
                 printf("synthesizing complete!\n");
             } else {
                 printf("error! (%d)\n", status);
