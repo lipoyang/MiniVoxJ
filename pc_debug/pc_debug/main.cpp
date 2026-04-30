@@ -5,7 +5,7 @@
 int main(void)
 {
     const int fs = 16000;       // サンプリング周波数[Hz]
-    const int BUFF_SIZE = 512;  // バッファサイズ
+    const int BUFF_SIZE = 256;  // バッファサイズ
     int16_t buffer[BUFF_SIZE];  // バッファ
 
     WavFileCreator wav(fs);

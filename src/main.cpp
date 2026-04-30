@@ -44,16 +44,18 @@ void loop()
       if(size > 0) {
         int written = audioOut.write(buffer, size);
         if(written != size) {
-          Serial.printf("Warning: audioOut.write() wrote only %d of %d samples\n", written, size);
+          Serial.print("Audio output Warning! : ");
+          Serial.println(written);
         }
       }
       // 音声合成が完了しているか？
       if (size < BUFF_SIZE) {
           int status = vox.getStatus();
           if (status == vox.COMPLETE) {
-              Serial.println("synthesizing complete!");
+              Serial.println("Synthesizing Complete!");
           } else {
-              Serial.printf("error! (%d)\n", status);
+              Serial.print("Synthesizing Error! : ");
+              Serial.println(status);
           }
       }
     }

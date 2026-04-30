@@ -1,5 +1,11 @@
-#include <driver/i2s.h>
 #include "I2sAudioOut.h"
+
+#if defined(ARDUINO_ARCH_ESP32)
+/************************************************************
+    XIAO ESP32C3
+ ************************************************************/
+
+#include <driver/i2s.h>
 
 // I2Sのポート番号
 #define I2S_PORT        (I2S_NUM_0)
@@ -77,3 +83,87 @@ int I2sAudioOut::write(int16_t* data, int size)
 
     return samples_written;
 }
+#elif defined(ARDUINO_ARCH_RP2040)
+/************************************************************
+    XIAO RP2040
+ ************************************************************/
+
+#include <I2S.h>
+
+I2S i2s(OUTPUT);
+
+// 初期化する
+// pins: I2Sのピン番号
+// sampleRate: サンプリング周波数[Hz]
+// bufferSize: バッファサイズ[サンプル数]
+// bufferCnt: バッファ段数
+void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int bufferLen)
+{
+    _bufferSize = bufferSize;
+    _bufferLen = bufferLen;
+    _available = true;
+
+    _buffer = (uint16_t**)malloc(sizeof(uint16_t*) * bufferLen * 2); // 2はステレオ分
+    if(_buffer == nullptr){
+        printf("_buffer malloc failed!\n");
+        return;
+    }
+    for(int i = 0; i < bufferLen; i++){
+        _buffer[i] = (uint16_t*)malloc(sizeof(uint16_t) * bufferSize);
+        if(_buffer[i] == nullptr){
+            printf("_buffer[%d] malloc failed!\n", i);
+            for(int j = 0; j < i; j++){
+                free(_buffer[j]);
+            }
+            free(_buffer);
+            return;
+        }
+    }
+
+    // SCK(BCLK) と LRCLK(WS) は隣りあうピンでないといけない
+    if(pins.WS != pins.SCK + 1){
+        printf("Bad WS pin number! (SCK=%d, WS=%d)\n", pins.SCK, pins.SD);
+        return;
+    }
+
+    i2s.setBCLK(pins.SCK);
+    i2s.setDATA(pins.SD);
+    i2s.setBitsPerSample(16); // 16ビットPCM
+    i2s.setBuffers(bufferLen, bufferSize);
+    i2s.begin(sampleRate);
+}
+
+// メインループ処理
+void I2sAudioOut::loop()
+{
+    int availableSize = i2s.availableForWrite();
+    if(availableSize > _bufferSize){
+        _available = true;
+    }else{
+        _available = false;
+    }
+}
+
+// オーディオデータを書き込む
+// data: 書き込むオーディオデータ
+// size: 書き込むサンプル数
+// 戻り値: 書き込んだサンプル数
+int I2sAudioOut::write(int16_t* data, int size)
+{
+    // バッファに空きがない場合は0を返す
+    if(_available == false) return 0;
+
+    for(int i = 0; i < size; i++){
+        int l = i2s.write(data[i], false);  // Left
+        int r = i2s.write(data[i], false);  // Right
+        if(l == 0 || r == 0){
+            _available = false;
+            return i; // 書き込んだサンプル数を返す
+        }
+    }
+    return size;
+}
+
+#elif defined(ARDUINO_ARCH_MBED)    // XIAO nRF52840
+
+#endif
