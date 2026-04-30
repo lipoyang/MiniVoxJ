@@ -208,7 +208,7 @@ static Phrase convertKana2Mora(const std::vector<uint16_t>& kanas)
         // アクセント記号 ' の場合、直前のモーラがアクセント核になる
         if (c == ACCENT_MARK) {
             if (phrase.moras.size() == 0) continue; // 前のモーラがなければ無効
-            phrase.accent = phrase.moras.size() - 1;
+            phrase.accent = (int)phrase.moras.size() - 1;
             continue;
         }
         // 長音記号 ー
@@ -336,69 +336,120 @@ static std::vector<Phrase> convertStr2Phrases(const std::vector<uint16_t>& utf16
     return phrases;
 }
 
+// アクセント句の各モーラのピッチを計算
+// phrase: アクセント句
+// return: ピッチ列
+static std::vector<float> computePitch(const Phrase& phrase)
+{
+    const int N = (int)phrase.moras.size();
+    const int accent = phrase.accent;
+
+    const float pitch_L  = 0.8f;
+    const float pitch_H  = 1.2f;
+    const float pitch_HH = 1.3f;
+
+    std::vector<float> pitches(N);
+
+    for(int i = 0; i < N; i++){
+        if(i == accent){
+            pitches[i] = pitch_HH;
+        }else{
+            if(i == 0){
+                pitches[i] = pitch_L;
+            }else{
+                if(i < accent){
+                    pitches[i] = pitch_H;
+                }else{
+                    pitches[i] = pitch_L;
+                }
+            }
+        }
+    }
+    return pitches;
+}
+
+// フォルマント区間を追加
+// segs: フォルマント区間列
+// phone: 音価
+// pitch: ピッチ
+static void formantSegAdd(std::vector<FormantSeg> &segs, const Phone &phone, float pitch)
+{
+    for (const FormantSeg &seg : phone) {
+        FormantSeg s = seg;
+        s.pitch = pitch;
+        segs.push_back(s);
+    }
+}
+
 // モーラ列をフォルマント区間列に変換
 // moras: モーラ列
+// pitches: ピッチ列
 // returns: フォルマント区間列
-static std::vector<FormantSeg> convertMora2FormantSeg(std::vector<Mora> moras)
+static std::vector<FormantSeg> convertMora2FormantSeg(const std::vector<Mora>& moras, const std::vector<float>& pitches)
 {
     std::vector<FormantSeg> segs;
 
+    int mora_pos = 0;
     for (Mora m : moras) {
+
+        // ピッチ
+        float pitch = pitches[mora_pos];
+        mora_pos++;
 
         // 促音 ッ
         if (m.c == Q) {
-            segs.insert(segs.end(), C_Q);
+            formantSegAdd(segs, C_Q, pitch);
             continue;
         }
         // 撥音 ン
         if (m.c == Nn) {
-            segs.insert(segs.end(), C_Nn);
+            formantSegAdd(segs, C_Nn, pitch);
             continue;
         }
         // 子音
         switch (m.c) {
         case _0:  break;
-        case K:   segs.insert(segs.end(), C_K);   break; // k  カ
-        case G:   segs.insert(segs.end(), C_G);   break; // g  ガ
-        case S:   segs.insert(segs.end(), C_S);   break; // s  ス
-        case Sj:  segs.insert(segs.end(), C_Sj);  break; // ɕ  シ
-        case DZj: segs.insert(segs.end(), C_DZj); break; // dʑ ジ
-        case DZ:  segs.insert(segs.end(), C_DZ);  break; // dz ズ
-        case T:   segs.insert(segs.end(), C_T);   break; // t  タ
-        case D:   segs.insert(segs.end(), C_D);   break; // d  ダ
-        case TSj: segs.insert(segs.end(), C_TSj); break; // tɕ チ
-        case TS:  segs.insert(segs.end(), C_TS);  break; // ts ツ
-        case N:   segs.insert(segs.end(), C_N);   break; // n  ナ
+        case K:   formantSegAdd(segs, C_K,   pitch); break; // k  カ
+        case G:   formantSegAdd(segs, C_G,   pitch); break; // g  ガ
+        case S:   formantSegAdd(segs, C_S,   pitch); break; // s  ス
+        case Sj:  formantSegAdd(segs, C_Sj,  pitch); break; // ɕ  シ
+        case DZj: formantSegAdd(segs, C_DZj, pitch); break; // dʑ ジ
+        case DZ:  formantSegAdd(segs, C_DZ,  pitch); break; // dz ズ
+        case T:   formantSegAdd(segs, C_T,   pitch); break; // t  タ
+        case D:   formantSegAdd(segs, C_D,   pitch); break; // d  ダ
+        case TSj: formantSegAdd(segs, C_TSj, pitch); break; // tɕ チ
+        case TS:  formantSegAdd(segs, C_TS,  pitch); break; // ts ツ
+        case N:   formantSegAdd(segs, C_N,   pitch); break; // n  ナ
         case H:
         {
             switch (m.v) {
-            case A:  segs.insert(segs.end(), C_Ha); break; // h ハ
-            case E:  segs.insert(segs.end(), C_He); break; // h ヘ
-            case O:  segs.insert(segs.end(), C_Ho); break; // h ホ
+            case A:  formantSegAdd(segs, C_Ha, pitch); break; // h ハ
+            case E:  formantSegAdd(segs, C_He, pitch); break; // h ヘ
+            case O:  formantSegAdd(segs, C_Ho, pitch); break; // h ホ
             default: break;
             }
         }
         break;
-        case Ch:  segs.insert(segs.end(), C_Ch);  break; // ç ヒ
-        case Ph:  segs.insert(segs.end(), C_Ph);  break; // ɸ フ
-        case P:   segs.insert(segs.end(), C_P);   break; // p パ
-        case B:   segs.insert(segs.end(), C_B);   break; // b バ
-        case M:   segs.insert(segs.end(), C_M);   break; // m マ
-        case J:   segs.insert(segs.end(), C_J);   break; // j ヤ
-        case R:   segs.insert(segs.end(), C_R);   break; // ɾ ラ
-        case W:   segs.insert(segs.end(), C_W);   break; // w ワ
+        case Ch:  formantSegAdd(segs, C_Ch, pitch);  break; // ç ヒ
+        case Ph:  formantSegAdd(segs, C_Ph, pitch);  break; // ɸ フ
+        case P:   formantSegAdd(segs, C_P,  pitch);  break; // p パ
+        case B:   formantSegAdd(segs, C_B,  pitch);  break; // b バ
+        case M:   formantSegAdd(segs, C_M,  pitch);  break; // m マ
+        case J:   formantSegAdd(segs, C_J,  pitch);  break; // j ヤ
+        case R:   formantSegAdd(segs, C_R,  pitch);  break; // ɾ ラ
+        case W:   formantSegAdd(segs, C_W,  pitch);  break; // w ワ
         default: break;
         }
         // 母音
         switch (m.v) {
-        case A:   segs.insert(segs.end(), V_A);  break; // ア a
-        case I:   segs.insert(segs.end(), V_I);  break; // イ i
-        case U:   segs.insert(segs.end(), V_U);  break; // ウ ɯ
-        case E:   segs.insert(segs.end(), V_E);  break; // エ e
-        case O:   segs.insert(segs.end(), V_O);  break; // オ o
-        case jA:  segs.insert(segs.end(), V_jA); break; // ャ ^ja
-        case jU:  segs.insert(segs.end(), V_jU); break; // ュ ^jɯ
-        case jO:  segs.insert(segs.end(), V_jO); break; // ョ ^jo
+        case A:   formantSegAdd(segs, V_A,  pitch); break; // ア a
+        case I:   formantSegAdd(segs, V_I,  pitch); break; // イ i
+        case U:   formantSegAdd(segs, V_U,  pitch); break; // ウ ɯ
+        case E:   formantSegAdd(segs, V_E,  pitch); break; // エ e
+        case O:   formantSegAdd(segs, V_O,  pitch); break; // オ o
+        case jA:  formantSegAdd(segs, V_jA, pitch); break; // ャ ^ja
+        case jU:  formantSegAdd(segs, V_jU, pitch); break; // ュ ^jɯ
+        case jO:  formantSegAdd(segs, V_jO, pitch); break; // ョ ^jo
         default: break;
         }
     }
@@ -408,19 +459,24 @@ static std::vector<FormantSeg> convertMora2FormantSeg(std::vector<Mora> moras)
 // アクセント句列をフォルマント区間列に変換
 // phrases: アクセント句列
 // returns: フォルマント区間列
-static std::vector<FormantSeg> convertPhrases2FormantSeg(std::vector<Phrase> phrases)
+static std::vector<FormantSeg> convertPhrases2FormantSeg(const std::vector<Phrase>& phrases)
 {
     std::vector<FormantSeg> segs;
 
     for (const Phrase& phr : phrases)
     {
-        // モーラ列 → フォルマント区間列
-        std::vector<FormantSeg> phr_segs = convertMora2FormantSeg(phr.moras);
+        // アクセント位置をもとにピッチ列を計算
+        std::vector<float> pitches = computePitch(phr);
+
+        // モーラ列, ピッチ列 → フォルマント区間列
+        std::vector<FormantSeg> phr_segs = convertMora2FormantSeg(phr.moras, pitches);
+
         // ポーズの追加
         if (phr.delimiter != 0) {
-            FormantSeg pause = { &Silence, pauseTime(phr.delimiter) };
+            FormantSeg pause = { &Silence, pauseTime(phr.delimiter), 1.0f };
             phr_segs.push_back(pause);
         }
+
         segs.insert(segs.end(), phr_segs.begin(), phr_segs.end());
     }
     return segs;
@@ -468,6 +524,7 @@ bool MiniVoxJ::setText(const char* utf8_str, int max)
     _total_cnt = 0;
     _status = PROCESSING;
     _gain = 1.0f;
+    _pitch = 1.0f;
     _source = SourceType::Impulse;
 
     return true;
@@ -488,6 +545,9 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                                 ? _formantSegs[_seg_cnt + 1].params : cur;
     // 処理中のフォルマントの長さ(サンプル数)
     int seg_len = ms2sa(_formantSegs[_seg_cnt].t_ms);
+    // ピッチ
+    float pitch_cur = _formantSegs[_seg_cnt].pitch;
+    float pitch_nxt = (_seg_cnt + 1 < _formantSegs.size()) ? _formantSegs[_seg_cnt + 1].pitch : pitch_cur;
 
     // 1フレームぶん1サンプルずつ
     for (int cnt = 0; cnt < _FrameLen; cnt++)
@@ -505,15 +565,19 @@ int MiniVoxJ::synthesize(int16_t* buffer)
             _resonators[2].set(p.f3, p.bw3);
             _gain = p.gain;
             _source = p.source;
+
+            // ピッチも滑らかにつなぐ
+            _pitch = pitch_cur + (pitch_nxt - pitch_cur) * k;
         }
 
         // 励振音源
         float s;
+        float f0 = F0 * _pitch;
         switch (_source) {
-        case SourceType::Impulse: s = _impulse.get(F0); break;
+        case SourceType::Impulse: s = _impulse.get(f0); break;
         case SourceType::Noise:   s = _noise.get();     break;
-        case SourceType::Mixed:   s = _mixed.get(F0);   break;
-        default: s = _impulse.get(F0);
+        case SourceType::Mixed:   s = _mixed.get(f0);   break;
+        default: s = _impulse.get(f0);
         }
 
         // 共振フィルタを順次通す

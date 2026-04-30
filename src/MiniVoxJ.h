@@ -75,7 +75,8 @@ struct FormantParams
 struct FormantSeg
 {
     const FormantParams* params; // フォルマントパラメータ
-    int t_ms;                    // 継続時間[msec]
+    int   t_ms;                  // 継続時間[msec]
+    float pitch;                 // ピッチ (0.5～2.0程度)
 };
 
 /**********************************************************
@@ -231,6 +232,7 @@ private:
     int _total_cnt = 0; // 累計サンプルカウント
     int _status = COMPLETE;// ステータス
     float _gain = 1.0f; // ゲイン
+    float _pitch = 1.0f;// ピッチ
     SourceType _source = SourceType::Impulse; // 励振音源の種類
     ImpulseGen _impulse;// インパルス音源
     NoiseGen _noise;    // ノイズ音源
