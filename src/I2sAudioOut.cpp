@@ -103,23 +103,6 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
     _bufferLen = bufferLen;
     _available = true;
 
-    _buffer = (uint16_t**)malloc(sizeof(uint16_t*) * bufferLen * 2); // 2はステレオ分
-    if(_buffer == nullptr){
-        printf("_buffer malloc failed!\n");
-        return;
-    }
-    for(int i = 0; i < bufferLen; i++){
-        _buffer[i] = (uint16_t*)malloc(sizeof(uint16_t) * bufferSize);
-        if(_buffer[i] == nullptr){
-            printf("_buffer[%d] malloc failed!\n", i);
-            for(int j = 0; j < i; j++){
-                free(_buffer[j]);
-            }
-            free(_buffer);
-            return;
-        }
-    }
-
     // SCK(BCLK) と LRCLK(WS) は隣りあうピンでないといけない
     if(pins.WS != pins.SCK + 1){
         printf("Bad WS pin number! (SCK=%d, WS=%d)\n", pins.SCK, pins.SD);
@@ -165,5 +148,101 @@ int I2sAudioOut::write(int16_t* data, int size)
 }
 
 #elif defined(ARDUINO_ARCH_MBED)    // XIAO nRF52840
+// #elif defined(ARDUINO_NRF52_ADAFRUIT) // XIAO nRF52840
+/************************************************************
+    XIAO nRF52840
+ ************************************************************/
+#include <hal/nrf_i2s.h>
+
+// 初期化する
+// pins: I2Sのピン番号
+// sampleRate: サンプリング周波数[Hz]
+// bufferSize: バッファサイズ[サンプル数]
+// bufferCnt: バッファ段数
+void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int bufferLen)
+{
+    _bufferSize = bufferSize;
+    _bufferLen = bufferLen;
+    _available = true;
+
+    // ゼロバッファ
+    _zeros = new int16_t[bufferSize];
+    memset(_zeros, 0, bufferSize * sizeof(int16_t));
+    // データバッファ
+    _buffer = new int16_t*[bufferLen];
+    for(int i = 0; i < bufferLen; i++){
+        _buffer[i] = new int16_t[bufferSize];
+    }
+    _wrIndex = 0;
+    _rdIndex = 0;
+
+    // TX 有効
+    NRF_I2S->CONFIG.TXEN = I2S_CONFIG_TXEN_TXEN_ENABLE << I2S_CONFIG_TXEN_TXEN_Pos;
+
+    // MCK 不使用
+    NRF_I2S->CONFIG.MCKEN = I2S_CONFIG_MCKEN_MCKEN_DISABLE << I2S_CONFIG_MCKEN_MCKEN_Pos;
+#if 0
+    NRF_I2S->CONFIG.MCKFREQ = I2S_CONFIG_MCKFREQ_MCKFREQ_32MDIV63 << I2S_CONFIG_MCKFREQ_MCKFREQ_Pos;
+    NRF_I2S->CONFIG.RATIO = I2S_CONFIG_RATIO_RATIO_64X << I2S_CONFIG_RATIO_RATIO_Pos;
+#endif
+    // Master mode, 16-bit, left-aligned
+    NRF_I2S->CONFIG.MODE   = I2S_CONFIG_MODE_MODE_MASTER    << I2S_CONFIG_MODE_MODE_Pos;
+    NRF_I2S->CONFIG.SWIDTH = I2S_CONFIG_SWIDTH_SWIDTH_16BIT << I2S_CONFIG_SWIDTH_SWIDTH_Pos;
+    NRF_I2S->CONFIG.ALIGN  = I2S_CONFIG_ALIGN_ALIGN_LEFT    << I2S_CONFIG_ALIGN_ALIGN_Pos;
+    NRF_I2S->CONFIG.FORMAT = I2S_CONFIG_FORMAT_FORMAT_I2S   << I2S_CONFIG_FORMAT_FORMAT_Pos;
+
+    // モノラルで左チャンネルのみ有効
+    NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_LEFT << I2S_CONFIG_CHANNELS_CHANNELS_Pos;
+
+    // ピン割り当て
+//  NRF_I2S->PSEL.MCK     Disable
+    NRF_I2S->PSEL.SCK   = pins.SCK << I2S_PSEL_SCK_PIN_Pos;
+    NRF_I2S->PSEL.LRCK  = pins.WS  << I2S_PSEL_LRCK_PIN_Pos;
+    NRF_I2S->PSEL.SDOUT = pins.SD  << I2S_PSEL_SDOUT_PIN_Pos;
+
+    // DMAバッファ
+    NRF_I2S->RXTXD.MAXCNT = bufferSize;
+    NRF_I2S->TXD.PTR = (uint32_t)_zeros;
+
+    // Start I2S
+    NRF_I2S->EVENTS_TXPTRUPD = 0;
+    NRF_I2S->ENABLE = 1;
+    NRF_I2S->TASKS_START = 1;
+}
+
+// メインループ処理
+void I2sAudioOut::loop()
+{
+    if (NRF_I2S->EVENTS_TXPTRUPD)
+    {
+        if(_rdIndex == _wrIndex) {
+            NRF_I2S->TXD.PTR = (uint32_t)_zeros;
+        } else {
+            NRF_I2S->TXD.PTR = (uint32_t)_buffer[_rdIndex];
+        }
+        NRF_I2S->EVENTS_TXPTRUPD = 0;
+        
+        _rdIndex = (_rdIndex + 1) % _bufferLen;
+        _available = true;
+    }
+}
+
+// オーディオデータを書き込む
+// data: 書き込むオーディオデータ
+// size: 書き込むサンプル数
+// 戻り値: 書き込んだサンプル数
+int I2sAudioOut::write(int16_t* data, int size)
+{
+    // バッファに空きがない場合は0を返す
+    if(_available == false) return 0;
+
+    memcpy(_buffer[_wrIndex], data, size * sizeof(int16_t));
+
+    _wrIndex = (_wrIndex + 1) % _bufferLen;
+    if(_wrIndex == _rdIndex) {
+        _available = false;
+    }
+    return size;
+}
 
 #endif

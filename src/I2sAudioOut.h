@@ -27,6 +27,10 @@ private:
 #elif defined(ARDUINO_ARCH_RP2040)  // XIAO RP2040
 
 #elif defined(ARDUINO_ARCH_MBED)    // XIAO nRF52840
-    
+//#elif defined(ARDUINO_NRF52_ADAFRUIT) // XIAO nRF52840
+    int16_t* _zeros;
+    int16_t** _buffer; 
+    int _wrIndex;
+    int _rdIndex;
 #endif
 };
