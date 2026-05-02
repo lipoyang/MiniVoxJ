@@ -38,6 +38,7 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
 
     // ピン割り当ての設定
     i2s_pin_config_t pin_config = {
+        .mck_io_num = I2S_PIN_NO_CHANGE,
         .bck_io_num = pins.SCK,
         .ws_io_num = pins.WS,
         .data_out_num = pins.SD,

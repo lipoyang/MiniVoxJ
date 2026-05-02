@@ -13,20 +13,21 @@ MiniVoxJ vox(fs, BUFF_SIZE);
 // I2Sオーディオ出力
 I2sAudioOut audioOut;
 I2sAudioPins pins = {
-    .SCK = 0, // I2S SCKピン
-    .WS  = 1, // I2S WSピン
-    .SD  = 2  // I2S SDピン
+    .SCK = D2, // I2S SCKピン
+    .WS  = D3, // I2S WSピン
+    .SD  = D4  // I2S SDピン
 };
 
 void setup()
 {
   Serial.begin(115200);
+  Serial.println("Hello!");
 
   // I2Sオーディオ出力の初期化
   audioOut.begin(pins, fs, BUFF_SIZE, BUFF_CNT);
 
   // 音声合成するテキストをセット
-  vox.setText("コンニチワ");
+  vox.setText("コ'ンニチワ。サヨオ'ナラ。");
 }
 
 void loop()
@@ -39,9 +40,11 @@ void loop()
     int status = vox.getStatus();
     if (status == vox.PROCESSING)
     {
+      Serial.print("#");
       // 1フレームぶん音声合成してI2Sオーディオ出力に書き込む
       int size = vox.synthesize(buffer);
       if(size > 0) {
+        //Serial.printf("%d %d %d %d\n", buffer[0], buffer[1], buffer[2], buffer[3]);
         int written = audioOut.write(buffer, size);
         if(written != size) {
           Serial.print("Audio output Warning! : ");
@@ -53,6 +56,7 @@ void loop()
           int status = vox.getStatus();
           if (status == vox.COMPLETE) {
               Serial.println("Synthesizing Complete!");
+              vox.setText("コ'ンニチワ。サヨオ'ナラ。");
           } else {
               Serial.print("Synthesizing Error! : ");
               Serial.println(status);
