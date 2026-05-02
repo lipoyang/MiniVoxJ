@@ -21,6 +21,7 @@ I2sAudioPins pins = {
 void setup()
 {
   Serial.begin(115200);
+  //while(!Serial){;}
   Serial.println("Hello!");
 
   // I2Sオーディオ出力の初期化

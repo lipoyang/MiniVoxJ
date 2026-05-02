@@ -19,7 +19,7 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
 {
     _bufferSize = bufferSize;
     _bufferLen = bufferLen;
-    _available = true;
+    _available = false; // ※注意
 
     // I2S構成の設定
     i2s_config_t i2s_config = {
@@ -47,7 +47,8 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
 
     i2s_driver_install(I2S_PORT, &i2s_config, bufferLen, &_i2s_event_queue);
     i2s_set_pin(I2S_PORT, &pin_config);
-    // i2s_zero_dma_buffer(I2S_PORT);
+    _freeBufferCnt = 0; //bufferLen;
+    i2s_zero_dma_buffer(I2S_PORT);
 }
 
 // メインループ処理
@@ -59,6 +60,8 @@ void I2sAudioOut::loop()
     if (xQueueReceive(_i2s_event_queue, &evt, ticks_to_wait) == pdTRUE) {
         if (evt.type == I2S_EVENT_TX_DONE) {
             _available = true;
+            _freeBufferCnt++;
+            if(_freeBufferCnt > _bufferLen) _freeBufferCnt = _bufferLen;
         }
     }
 }
@@ -78,8 +81,10 @@ int I2sAudioOut::write(int16_t* data, int size)
     i2s_write(I2S_PORT, data, size * sizeof(int16_t), &bytes_written, ticks_to_wait);
     int samples_written = bytes_written / sizeof(int16_t);
 
-    if(samples_written < size) {
+    _freeBufferCnt--;
+    if(_freeBufferCnt <= 0) {
         _available = false;
+        _freeBufferCnt = 0;
     }
 
     return samples_written;

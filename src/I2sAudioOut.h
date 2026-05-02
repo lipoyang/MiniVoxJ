@@ -24,6 +24,7 @@ private:
 
 #if defined(ARDUINO_ARCH_ESP32)     // XIAO ESP32C3
     QueueHandle_t _i2s_event_queue;
+    int _freeBufferCnt;
 #elif defined(ARDUINO_ARCH_RP2040)  // XIAO RP2040
 
 #elif defined(ARDUINO_ARCH_MBED)    // XIAO nRF52840
