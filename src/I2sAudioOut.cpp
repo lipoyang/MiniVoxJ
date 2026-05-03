@@ -143,9 +143,8 @@ int I2sAudioOut::write(int16_t* data, int size)
     if(_available == false) return 0;
 
     for(int i = 0; i < size; i++){
-        int l = i2s.write(data[i], false);  // Left
-        int r = i2s.write(data[i], false);  // Right
-        if(l == 0 || r == 0){
+        int written = i2s.write(data[i], false);
+        if(written == 0){
             _available = false;
             return i; // 書き込んだサンプル数を返す
         }

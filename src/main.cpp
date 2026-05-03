@@ -45,6 +45,7 @@ void loop()
       // 1フレームぶん音声合成してI2Sオーディオ出力に書き込む
       int size = vox.synthesize(buffer);
       if(size > 0) {
+        if(size != BUFF_SIZE){Serial.printf("!!! size=%d !!!\n", size);}
         //Serial.printf("%d %d %d %d\n", buffer[0], buffer[1], buffer[2], buffer[3]);
         int written = audioOut.write(buffer, size);
         if(written != size) {
