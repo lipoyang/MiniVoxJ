@@ -21,6 +21,7 @@ I2sAudioPins pins = {
 void setup()
 {
   Serial.begin(115200);
+  delay(2000);
   //while(!Serial){;}
   Serial.println("Hello!");
 
@@ -33,6 +34,7 @@ void setup()
 
 void loop()
 {
+  //Serial.println(".");
   // I2Sオーディオ出力の書き込み可能チェック
   audioOut.loop();
   if (audioOut.available())

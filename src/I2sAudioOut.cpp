@@ -178,8 +178,7 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
     for(int i = 0; i < bufferLen; i++){
         _buffer[i] = new int16_t[bufferSize];
     }
-    _wrIndex = 0;
-    _rdIndex = 0;
+    _bufferIndex = 0;
 
     // TX 有効
     NRF_I2S->CONFIG.TXEN = I2S_CONFIG_TXEN_TXEN_ENABLE << I2S_CONFIG_TXEN_TXEN_Pos;
@@ -220,14 +219,16 @@ void I2sAudioOut::loop()
 {
     if (NRF_I2S->EVENTS_TXPTRUPD)
     {
-        if(_rdIndex == _wrIndex) {
+        if(_queue.empty()) {
             NRF_I2S->TXD.PTR = (uint32_t)_zeros;
         } else {
-            NRF_I2S->TXD.PTR = (uint32_t)_buffer[_rdIndex];
+            NRF_I2S->TXD.PTR = (uint32_t)_queue.front();
+            _queue.pop();
         }
         NRF_I2S->EVENTS_TXPTRUPD = 0;
         
-        _rdIndex = (_rdIndex + 1) % _bufferLen;
+        Serial.print("&&& T ");
+        Serial.println(_queue.size());
         _available = true;
     }
 }
@@ -241,10 +242,13 @@ int I2sAudioOut::write(int16_t* data, int size)
     // バッファに空きがない場合は0を返す
     if(_available == false) return 0;
 
-    memcpy(_buffer[_wrIndex], data, size * sizeof(int16_t));
+    memcpy(_buffer[_bufferIndex], data, size * sizeof(int16_t));
+    _queue.push(_buffer[_bufferIndex]);
 
-    _wrIndex = (_wrIndex + 1) % _bufferLen;
-    if(_wrIndex == _rdIndex) {
+    _bufferIndex = (_bufferIndex + 1) % _bufferLen;
+    if((int)_queue.size() >= _bufferLen){
+        Serial.print("$$$ F ");
+        Serial.print(_queue.size());
         _available = false;
     }
     return size;

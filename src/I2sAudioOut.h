@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <stdint.h>
+#include <queue>
 
 // I2Sのピン番号
 struct I2sAudioPins{
@@ -31,7 +32,7 @@ private:
 //#elif defined(ARDUINO_NRF52_ADAFRUIT) // XIAO nRF52840
     int16_t* _zeros;
     int16_t** _buffer; 
-    int _wrIndex;
-    int _rdIndex;
+    int _bufferIndex;
+    std::queue<int16_t*> _queue;
 #endif
 };
