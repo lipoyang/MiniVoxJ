@@ -188,8 +188,6 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
     // ※ MCK 不使用でも有効にする必要あり
     NRF_I2S->CONFIG.MCKEN = I2S_CONFIG_MCKEN_MCKEN_ENABLE << I2S_CONFIG_MCKEN_MCKEN_Pos;
     // サンプリング周波数 ≒ 16kHz  (32MHz /31 / 64 = 16.129kHz)
-//      NRF_I2S->CONFIG.MCKFREQ = I2S_CONFIG_MCKFREQ_MCKFREQ_32MDIV16 << I2S_CONFIG_MCKFREQ_MCKFREQ_Pos;
-//      NRF_I2S->CONFIG.RATIO = I2S_CONFIG_RATIO_RATIO_128X << I2S_CONFIG_RATIO_RATIO_Pos;
     NRF_I2S->CONFIG.MCKFREQ = I2S_CONFIG_MCKFREQ_MCKFREQ_32MDIV31 << I2S_CONFIG_MCKFREQ_MCKFREQ_Pos;
     NRF_I2S->CONFIG.RATIO = I2S_CONFIG_RATIO_RATIO_64X << I2S_CONFIG_RATIO_RATIO_Pos;
 
@@ -201,7 +199,6 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
 
     // モノラルで左チャンネルのみ有効
     NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_LEFT << I2S_CONFIG_CHANNELS_CHANNELS_Pos;
-//  NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_STEREO << I2S_CONFIG_CHANNELS_CHANNELS_Pos;
 
     // ピン割り当て
     NRF_I2S->PSEL.MCK   = I2S_PSEL_MCK_CONNECT_Disconnected << I2S_PSEL_MCK_CONNECT_Pos; // ※ 接続しない
@@ -222,7 +219,6 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
 // メインループ処理
 void I2sAudioOut::loop()
 {
-    //if(nrf_i2s_event_check(NRF_I2S, NRF_I2S_EVENT_TXPTRUPD))
     if (NRF_I2S->EVENTS_TXPTRUPD)
     {
         if(_queue.empty()) {
@@ -232,9 +228,7 @@ void I2sAudioOut::loop()
             _queue.pop();
         }
         NRF_I2S->EVENTS_TXPTRUPD = 0;
-        (void)NRF_I2S->EVENTS_TXPTRUPD; // ダミーリードで確実に反映
         
-        //Serial.print("&&& T ");
         _available = true;
     }
 }
@@ -253,8 +247,6 @@ int I2sAudioOut::write(int16_t* data, int size)
 
     _bufferIndex = (_bufferIndex + 1) % _bufferLen;
     if((int)_queue.size() >= _bufferLen){
-        //Serial.print("$$$ F ");
-        //Serial.print(_queue.size());
         _available = false;
     }
     return size;
