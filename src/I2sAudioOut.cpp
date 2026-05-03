@@ -158,6 +158,7 @@ int I2sAudioOut::write(int16_t* data, int size)
     XIAO nRF52840
  ************************************************************/
 #include <hal/nrf_i2s.h>
+#include "pinDefinitions.h"
 
 // 初期化する
 // pins: I2Sのピン番号
@@ -199,10 +200,10 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
     NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_LEFT << I2S_CONFIG_CHANNELS_CHANNELS_Pos;
 
     // ピン割り当て
-//  NRF_I2S->PSEL.MCK     Disable
-    NRF_I2S->PSEL.SCK   = pins.SCK << I2S_PSEL_SCK_PIN_Pos;
-    NRF_I2S->PSEL.LRCK  = pins.WS  << I2S_PSEL_LRCK_PIN_Pos;
-    NRF_I2S->PSEL.SDOUT = pins.SD  << I2S_PSEL_SDOUT_PIN_Pos;
+    NRF_I2S->PSEL.MCK   = I2S_PSEL_MCK_CONNECT_Disconnected << I2S_PSEL_MCK_CONNECT_Pos; // ※ 接続しない
+    NRF_I2S->PSEL.SCK   = digitalPinToPinName(pins.SCK) << I2S_PSEL_SCK_PIN_Pos;
+    NRF_I2S->PSEL.LRCK  = digitalPinToPinName(pins.WS)  << I2S_PSEL_LRCK_PIN_Pos;
+    NRF_I2S->PSEL.SDOUT = digitalPinToPinName(pins.SD)  << I2S_PSEL_SDOUT_PIN_Pos;
 
     // DMAバッファ
     NRF_I2S->RXTXD.MAXCNT = bufferSize;
