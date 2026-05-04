@@ -246,7 +246,7 @@ int I2sAudioOut::write(int16_t* data, int size)
     _queue.push(_buffer[_bufferIndex]);
 
     _bufferIndex = (_bufferIndex + 1) % _bufferLen;
-    if((int)_queue.size() >= _bufferLen){
+    if((int)_queue.size() >= _bufferLen - 2){
         _available = false;
     }
     return size;
