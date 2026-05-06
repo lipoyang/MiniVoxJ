@@ -28,7 +28,7 @@ void setup()
   audioOut.begin(pins, fs, BUFF_SIZE, BUFF_CNT);
 
   // 音声合成するテキストをセット
-  vox.setText("コ'ンニチワ。サヨオ'ナラ。");
+  vox.setText("ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテ/イタ'。");
 }
 
 void loop()
@@ -59,7 +59,7 @@ void loop()
           int status = vox.getStatus();
           if (status == vox.COMPLETE) {
               Serial.println("Synthesizing Complete!");
-              vox.setText("コ'ンニチワ。サヨオ'ナラ。");
+              vox.setText("ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテ/イタ'。");
           } else {
               Serial.print("Synthesizing Error! : ");
               Serial.println(status);

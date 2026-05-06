@@ -16,7 +16,7 @@ int main(void)
         return -1;
     }
 
-    vox.setText("コンニチワ'、サヨオナラ'");
+    vox.setText("ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテ/イタ'。");
 
     while (true) {
         int size = vox.synthesize(buffer);
