@@ -143,23 +143,36 @@ private:
     float phase = 0.0; // 周期内の位相(0～1)
 };
 
-// ノイズ音源
+// ノイズ音源 (ガウスノイズ)
 class NoiseGen {
 public:
     // seed: 乱数のシード
     NoiseGen(uint32_t seed = 22695477) : state(seed) {}
     
     // 次のサンプルを取得
-    float get() {
-        // LCG（線形合同法) による疑似乱数
-        state = a * state + c;
-        return static_cast<float>(static_cast<int32_t>(state)) / MAX;
+    float get(){
+        float sum = 0.0f;
+        for (int i = 0; i < 12; i++) {
+            sum += random();
+        }
+        float val = sum - 6.0f;
+        sum /= 12.0;
+        if(sum > 1.0f) sum = 1.0f;
+        if(sum < -1.0f) sum = -1.0f;
+        return sum;
     }
 private:
     const uint32_t a = 1664525;
     const uint32_t c = 1013904223;
     const float MAX = static_cast<float>(INT32_MAX + 1.0f);
     uint32_t state;
+
+    // 乱数生成
+    float random() {
+        // LCG（線形合同法) による疑似乱数
+        state = a * state + c;
+        return static_cast<float>(static_cast<int32_t>(state)) / MAX;
+    }
 };
 
 // 混合音源
