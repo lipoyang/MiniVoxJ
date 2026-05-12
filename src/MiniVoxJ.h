@@ -156,7 +156,7 @@ public:
             sum += random();
         }
         float val = sum - 6.0f;
-        sum /= 12.0;
+        sum /= 6.0;
         if(sum > 1.0f) sum = 1.0f;
         if(sum < -1.0f) sum = -1.0f;
         return sum;

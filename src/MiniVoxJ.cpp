@@ -10,7 +10,7 @@
 
 // 暫定定数 TODO
 constexpr float F0  = 160.0f; // 基本周波数
-constexpr float Amp = 0.9f * 32767.0f; // 振幅
+constexpr float Amp = 0.5f * 32767.0f; // 振幅
 
 // Unicode
 static constexpr uint16_t KANA_BEGIN = 0x30A1; // カタカナの最初 ァ
