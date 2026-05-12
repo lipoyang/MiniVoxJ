@@ -527,6 +527,8 @@ bool MiniVoxJ::setText(const char* utf8_str, int max)
     _pitch = 1.0f;
     _source = SourceType::Impulse;
 
+    for (Resonator& filter : _resonators) filter.reset();
+
     return true;
 }
 
@@ -605,6 +607,8 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                 nxt = (_seg_cnt + 1 < _formantSegs.size())
                     ? _formantSegs[_seg_cnt + 1].params : cur;
                 seg_len = ms2sa(_formantSegs[_seg_cnt].t_ms);
+
+                for (Resonator& filter : _resonators) filter.reset();
             }
         }
     }
