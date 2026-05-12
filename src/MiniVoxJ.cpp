@@ -494,7 +494,7 @@ static FormantParams interpolate(const FormantParams& a, const FormantParams& b,
         a.bw1 + (b.bw1 - a.bw1) * k,
         a.bw2 + (b.bw2 - a.bw2) * k,
         a.bw3 + (b.bw3 - a.bw3) * k,
-        a.gain + (b.gain - a.gain) * k,
+        (a.source == b.source) ? a.gain + (b.gain - a.gain) * k : a.gain,
         a.source,  // 励振音源の種類は現在のものを使用）
     };
 }
