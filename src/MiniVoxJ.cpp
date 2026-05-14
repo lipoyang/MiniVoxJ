@@ -344,25 +344,45 @@ static std::vector<float> computePitch(const Phrase& phrase)
     const int N = (int)phrase.moras.size();
     const int accent = phrase.accent;
 
-    const float pitch_L  = 0.8f;
-    const float pitch_H  = 1.2f;
-    const float pitch_HH = 1.3f;
+    const float pitch_LL = 0.8f;
+    const float pitch_L  = 0.9f;
+    const float pitch_H  = 1.1f;
+    const float pitch_HH = 1.2f;
+
+    const float k1 = (pitch_HH - pitch_H) / (accent - 1);     // アクセント核より前のピッチの傾き
+    const float k2 = (pitch_LL - pitch_L) / (N - 1 - accent); // アクセント核より後のピッチの傾き
+    const float k3 = 0.05f; // 全体に下降するピッチの傾き
+    const float k4 = 0.9f;  // アクセント句末を下げる係数
 
     std::vector<float> pitches(N);
 
-    for(int i = 0; i < N; i++){
+    for(int i = 0; i < N; i++)
+    {
+        // アクセント核はH(最高)
         if(i == accent){
             pitches[i] = pitch_HH;
         }else{
+            // 1拍目はアクセント核でない場合はL(最低)
             if(i == 0){
-                pitches[i] = pitch_L;
-            }else{
+                pitches[i] = pitch_LL;
+            }
+            // それ以外は、アクセント核より前はH、アクセント核より後はL
+            else{
                 if(i < accent){
-                    pitches[i] = pitch_H;
+                    // アクセント核より前はHからアクセント核に向かって徐々に上がる
+                    pitches[i] = pitch_H + k1 * (i - 1);
                 }else{
-                    pitches[i] = pitch_L;
+                    // アクセント核より後はLからアクセント核に向かって徐々に下がる
+                    pitches[i] = pitch_L + k2 * (i - accent);
                 }
             }
+        }
+        // 全体に下降する
+        pitches[i] *= 1.0f - 0.05f * i;
+        
+        // アクセント句末を下げる
+        if(i == N - 1){
+            pitches[i] *= k4;
         }
     }
     return pitches;
