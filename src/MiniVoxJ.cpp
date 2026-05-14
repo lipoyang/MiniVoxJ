@@ -341,6 +341,8 @@ static std::vector<Phrase> convertStr2Phrases(const std::vector<uint16_t>& utf16
 // return: ピッチ列
 static std::vector<float> computePitch(const Phrase& phrase)
 {
+    const uint16_t delimiter = phrase.delimiter; // 区切り文字
+
     const int N = (int)phrase.moras.size();
     const int accent = phrase.accent;
 
@@ -352,7 +354,10 @@ static std::vector<float> computePitch(const Phrase& phrase)
     const float k1 = (pitch_HH - pitch_H) / (accent - 1);     // アクセント核より前のピッチの傾き
     const float k2 = (pitch_LL - pitch_L) / (N - 1 - accent); // アクセント核より後のピッチの傾き
     const float k3 = 0.05f; // 全体に下降するピッチの傾き
-    const float k4 = 0.9f;  // アクセント句末を下げる係数
+
+    const float e1 = 0.9f;  // アクセント句末を下げる係数
+    const float e2 = 0.8f;  // 通常の文末
+    const float e3 = 1.2f;  // 疑問文の文末
 
     std::vector<float> pitches(N);
 
@@ -380,9 +385,15 @@ static std::vector<float> computePitch(const Phrase& phrase)
         // 全体に下降する
         pitches[i] *= 1.0f - 0.05f * i;
         
-        // アクセント句末を下げる
+        // アクセント句末を下げる (疑問文の文末は上げる)
         if(i == N - 1){
-            pitches[i] *= k4;
+            if(delimiter == 0x003F || delimiter == 0xFF1F){ // 疑問文の文末 (? or ？)
+                pitches[i] = e3;
+            }else if(delimiter == 0x002E || delimiter == 0x3002){ // 通常の文末 (. or 。)
+                pitches[i] = e2;
+            }else{
+                pitches[i] *= e1;
+            }
         }
     }
     return pitches;
