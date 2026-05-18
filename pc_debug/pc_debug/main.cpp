@@ -16,6 +16,7 @@ int main(void)
         return -1;
     }
 
+    vox.setVoiceType(VoiceType::Male);
     vox.setText("ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテ/イタ'。");
 
     while (true) {

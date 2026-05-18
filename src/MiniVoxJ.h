@@ -79,6 +79,14 @@ struct FormantSeg
     float pitch;                 // ピッチ (0.5～2.0程度)
 };
 
+// 声種別
+enum class VoiceType {
+	Male = 0, // 
+	Female,
+	Cute,
+	Anime
+};
+
 /**********************************************************
     クラス定義
  **********************************************************/
@@ -206,13 +214,16 @@ public:
         _SlotLen(sampleRate * T_SLOT / 1000),
         _impulse((float)sampleRate),
         _noise(),
-        _mixed(&_impulse, &_noise) {}
+        _mixed(&_impulse, &_noise),
+        _voice_type(VoiceType::Male){}
 
     bool setText(const char* utf8_str, int max = 255);
     int  synthesize(int16_t* buffer);
 
     int  getStatus() const { return _status; }
     int  getSampleCnt() const { return _total_cnt; }
+    
+    void setVoiceType(VoiceType type) { _voice_type = type; }
 
     const int PROCESSING = 0;   // 処理中
     const int COMPLETE = 1;     // 合成完了
@@ -249,5 +260,6 @@ private:
     SourceType _source = SourceType::Impulse; // 励振音源の種類
     ImpulseGen _impulse;// インパルス音源
     NoiseGen _noise;    // ノイズ音源
-    MixedGen _mixed;    // 混合音源 
+    MixedGen _mixed;    // 混合音源
+    VoiceType _voice_type; // 声質
 };

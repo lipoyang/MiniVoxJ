@@ -8,9 +8,9 @@
     定数・テーブル
  **********************************************************/
 
-// 暫定定数 TODO
-constexpr float F0  = 160.0f; // 基本周波数
 constexpr float Amp = 0.5f * 32767.0f; // 振幅
+constexpr float F0[] = {160.0f, 220.0f, 280.0f, 330.0f}; // 基本周波数
+constexpr float KF[] = {  1.0f,   1.15f,  1.3f,   1.5f}; // フォルマント周波数の倍率
 
 // Unicode
 static constexpr uint16_t KANA_BEGIN = 0x30A1; // カタカナの最初 ァ
@@ -593,9 +593,10 @@ int MiniVoxJ::synthesize(int16_t* buffer)
             FormantParams p = interpolate(*cur, *nxt, k);
 
             // 共振フィルタ係数とゲインの設定
-            _resonators[0].set(p.f1, p.bw1);
-            _resonators[1].set(p.f2, p.bw2);
-            _resonators[2].set(p.f3, p.bw3);
+            const float kf = KF[(int)_voice_type];
+            _resonators[0].set(p.f1 * kf, p.bw1);
+            _resonators[1].set(p.f2 * kf, p.bw2);
+            _resonators[2].set(p.f3 * kf, p.bw3);
             _gain = p.gain;
             _source = p.source;
 
@@ -605,7 +606,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
 
         // 励振音源
         float s;
-        float f0 = F0 * _pitch;
+        float f0 = F0[(int)_voice_type] * _pitch;
         switch (_source) {
         case SourceType::Impulse: s = _impulse.get(f0); break;
         case SourceType::Noise:   s = _noise.get();     break;
