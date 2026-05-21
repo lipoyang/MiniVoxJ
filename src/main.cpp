@@ -37,10 +37,10 @@ void onReceived(const char* buff)
     case 'V':
       // 声質を変更
       switch(buff[1]) {
-        case 'M': vox.setVoiceType(VoiceType::Male);   break;
-        case 'F': vox.setVoiceType(VoiceType::Female); break;
-        case 'C': vox.setVoiceType(VoiceType::Cute);   break;
-        case 'A': vox.setVoiceType(VoiceType::Anime);  break;
+        case '0': vox.setVoiceType(VoiceType::Male);   break;
+        case '1': vox.setVoiceType(VoiceType::Female); break;
+        case '2': vox.setVoiceType(VoiceType::Cute);   break;
+        case '3': vox.setVoiceType(VoiceType::Anime);  break;
         default:
           Serial.println("Unknown voice type!");
       }
