@@ -7,6 +7,8 @@
 
 ## サンプルコードの開発環境
 * PlatformIO / Arduinoフレームワーク
+* ライブラリ ( ```MiniVoxJ``` クラス ) 本体はアーキテクチャ非依存
+* Windows PC上での動作確認は [こちら](./pc_debug) ( Visual Studioのプロジェクト )
 
 ## サンプルコードの対応マイコン
 * Seeed Studio XIAO nRF52840
