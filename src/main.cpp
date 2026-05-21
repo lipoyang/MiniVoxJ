@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "MiniVoxJ.h"
 #include "I2sAudioOut.h"
+#include "SerialCom.h"
 
 const int fs = 16000;       // サンプリング周波数[Hz]
 const int BUFF_SIZE = 512;  // バッファサイズ
@@ -18,19 +19,53 @@ I2sAudioPins pins = {
     .SD  = D4  // I2S SDピン
 };
 
+// シリアルコマンド受信クラス
+SerialCom serialCom;
+
+// コマンド受信ハンドラ
+void onReceived(const char* buff)
+{
+  Serial.print("Received command: ");
+  Serial.println(buff);
+
+  char cmd = buff[0];
+  switch(cmd) {
+    case 'P':
+      // 音声合成するテキストをセット
+      vox.setText(&buff[1]);
+      break;
+    case 'V':
+      // 声質を変更
+      switch(buff[1]) {
+        case 'M': vox.setVoiceType(VoiceType::Male);   break;
+        case 'F': vox.setVoiceType(VoiceType::Female); break;
+        case 'C': vox.setVoiceType(VoiceType::Cute);   break;
+        case 'A': vox.setVoiceType(VoiceType::Anime);  break;
+        default:
+          Serial.println("Unknown voice type!");
+      }
+      break;
+    default:
+      Serial.println("Unknown command!");
+  }
+}
+
+// 初期化処理
 void setup()
 {
   Serial.begin(115200);
-  delay(2000);
-  Serial.println("Hello!");
 
   // I2Sオーディオ出力の初期化
   audioOut.begin(pins, fs, BUFF_SIZE, BUFF_CNT);
 
+  // シリアルコマンド受信の初期化
+  serialCom.begin(Serial, onReceived);
+
   // 音声合成するテキストをセット
-  vox.setText("ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテ/イタ'。");
+  // vox.setText("コンニチワ'。");
 }
 
+// メインループ
 void loop()
 {
   // I2Sオーディオ出力の書き込み可能チェック
@@ -41,7 +76,7 @@ void loop()
     int status = vox.getStatus();
     if (status == vox.PROCESSING)
     {
-      Serial.print("#");
+      Serial.print("*");
       // 1フレームぶん音声合成してI2Sオーディオ出力に書き込む
       int size = vox.synthesize(buffer);
       if(size > 0) {
@@ -59,7 +94,6 @@ void loop()
           int status = vox.getStatus();
           if (status == vox.COMPLETE) {
               Serial.println("Synthesizing Complete!");
-              vox.setText("ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテ/イタ'。");
           } else {
               Serial.print("Synthesizing Error! : ");
               Serial.println(status);
@@ -67,4 +101,7 @@ void loop()
       }
     }
   }
+
+  // シリアルコマンド受信処理
+  serialCom.loop();
 }

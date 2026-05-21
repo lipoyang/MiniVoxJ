@@ -383,7 +383,7 @@ static std::vector<float> computePitch(const Phrase& phrase)
             }
         }
         // 全体に下降する
-        pitches[i] *= 1.0f - 0.05f * i;
+        pitches[i] *= 1.0f - k3 * i;
         
         // アクセント句末を下げる (疑問文の文末は上げる)
         if(i == N - 1){

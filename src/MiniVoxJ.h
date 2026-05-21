@@ -164,10 +164,10 @@ public:
             sum += random();
         }
         float val = sum - 6.0f;
-        sum /= 6.0;
-        if(sum > 1.0f) sum = 1.0f;
-        if(sum < -1.0f) sum = -1.0f;
-        return sum;
+        val /= 6.0;
+        if(val > 1.0f) val = 1.0f;
+        if(val < -1.0f) val = -1.0f;
+        return val;
     }
 private:
     const uint32_t a = 1664525;
