@@ -5,10 +5,13 @@
 
 * [イチから作る超軽量ローカル音声合成エンジン | ProtoPedia](https://protopedia.net/prototype/8364)
 
-## サンプルコードの開発環境
-* PlatformIO / Arduinoフレームワーク
-* ライブラリ ( ```MiniVoxJ``` クラス ) 本体はアーキテクチャ非依存
-* Windows PC上での動作確認は [こちら](./pc_debug) ( Visual Studioのプロジェクト )
+## ファイル
+* [./lib/MiniVoxJ/](./lib/MiniVoxJ/) : エンジンのソースコード (アーキテクチャ非依存)
+* [./](./) : サンプルコードの PlatformIO プロジェクトフォルダ
+* [./src/](./src/) : サンプルコード
+* [./web_app/usb/](./web_app/usb/) : 上記サンプルコードと通信するWebアプリ (USB接続)
+* [./web_app/ble/](./web_app/ble/) : 上記サンプルコードと通信するWebアプリ (BLE接続)
+* [./pc_debug/](./pc_debug/) : Windows PC上での動作確認用の Visual Studio プロジェクト
 
 ## サンプルコードの対応マイコン
 * Seeed Studio XIAO nRF52840

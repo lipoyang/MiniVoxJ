@@ -106,7 +106,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>Default</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\lib\MiniVoxJ</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,14 +129,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\MiniVoxJ.cpp" />
-    <ClCompile Include="..\..\src\utility\utf8_decode.cpp" />
+    <ClCompile Include="..\..\lib\MiniVoxJ\MiniVoxJ.cpp" />
+    <ClCompile Include="..\..\lib\MiniVoxJ\utility\utf8_decode.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="WavFileCreator.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\MiniVoxJ.h" />
-    <ClInclude Include="..\..\src\utility\utf8_decode.h" />
+    <ClInclude Include="..\..\lib\MiniVoxJ\MiniVoxJ.h" />
+    <ClInclude Include="..\..\lib\MiniVoxJ\utility\utf8_decode.h" />
     <ClInclude Include="WavFileCreator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
