@@ -2,6 +2,7 @@
 #include "MiniVoxJ.h"
 #include "I2sAudioOut.h"
 #include "SerialCom.h"
+#include "BleCom.h"
 
 const int fs = 16000;       // サンプリング周波数[Hz]
 const int BUFF_SIZE = 512;  // バッファサイズ
@@ -21,6 +22,11 @@ I2sAudioPins pins = {
 
 // シリアルコマンド受信クラス
 SerialCom serialCom;
+
+#if defined(ARDUINO_ARCH_MBED) // XIAO nRF52840
+// BLEコマンド受信クラス
+BleCom bleCom;
+#endif
 
 // コマンド受信ハンドラ
 void onReceived(const char* buff)
@@ -60,6 +66,11 @@ void setup()
 
   // シリアルコマンド受信の初期化
   serialCom.begin(Serial, onReceived);
+
+#if defined(ARDUINO_ARCH_MBED) // XIAO nRF52840
+  // BLEコマンド受信の初期化
+  bleCom.begin("MiniVoxJ", onReceived);
+#endif
 
   // 音声合成するテキストをセット
   // vox.setText("コンニチワ'。");
@@ -104,4 +115,9 @@ void loop()
 
   // シリアルコマンド受信処理
   serialCom.loop();
+  
+#if defined(ARDUINO_ARCH_MBED) // XIAO nRF52840
+  // BLEコマンド受信処理
+  bleCom.loop();
+#endif
 }

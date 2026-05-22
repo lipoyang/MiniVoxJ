@@ -1,6 +1,6 @@
 #include "SerialCom.h"
 
-// 0x02/0x03だとデバッグしにくいので、#/$ を 電文開始/終了 に使う
+// 0x02/0x03だとデバッグしにくいので、#/\n を 電文開始/終了 に使う
 // 電文開始
 #define CODE_STX '#'
 // 電文終了
@@ -13,7 +13,6 @@
 
 // 初期化
 // serial: シリアルポート
-// baud: ボーレート
 // onReceived: 受信ハンドラ
 void SerialCom::begin(Stream & serial, void (*onReceived)(const char*))
 {

@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+  <head>
+    <title>MiniVoxJ</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+  </head>
+
+  <body>
+    <div class="container" style="max-width: 800px">
+    <div class="row m-2">
+      <div class="col text-center"><h1>MiniVoxJ 日本語音声合成 (BLE接続)</h1></div>
+    </div>
+      <!-- (1) 接続画面 -->
+      <div id="panel_connect">
+        <div class="row my-4 justify-content-center">
+          <div class="col-4"><div class="d-grid gap-2">
+              <button id="btn_connect" class="btn btn-primary btn-block rounded-pill">接続</button>
+          </div></div>
+        </div>
+      </div>
+      <!-- (2) メイン画面 -->
+      <div id="panel_main" style="display:none">
+        <!-- テキスト入力エリア -->
+        <div class="row mt-2 mb-2">
+          <label for="text_kana" style="font-size: 1.2rem">テキスト入力</label>
+          <textarea class="form-control" id="text_kana" rows="3" >コンニチワ'。</textarea>
+        </div>
+        <div class="row mt-2 mb-2">
+          <div class="col-2"><div class="d-grid gap-2">
+            <button type="button" class="btn btn-primary btn-block rounded-pill mt-2 w-20" id="btn_play">送信</button>
+          </div></div>
+        </div>
+
+        <!-- 音声選択エリア -->
+        <div class="row mt-4 mb-2">
+          <label for="select_voice" style="font-size: 1.2rem">音声タイプ選択</label>
+          <div class="col-3"><div class="d-grid gap-2">
+            <select class="form-select" id="select_voice">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Cute">Cute</option>
+              <option value="Anime">Anime</option>
+            </select>
+          </div></div>
+        </div>
+        <div class="row mt-2 mb-2">
+          <div class="col-2"><div class="d-grid gap-2">
+            <button type="button" class="btn btn-primary btn-block rounded-pill mt-2 w-20" id="btn_voice">設定</button>
+          </div></div>
+        </div>
+
+        <!-- [切断] -->
+        <div class="row mt-2 mb-0"><div class="col-2">　</div></div>
+        <div class="row mt-2 mb-0">
+          <div class="col-2"><div class="d-grid gap-0">
+              <button id="btn_disconnect" class="btn btn-danger btn-block rounded-pill">切断</button>
+          </div></div>
+        </div>
+
+      </div> <!-- (2) メイン画面 -->
+
+    </div> <!-- div class="container" -->
+
+    <!-- スクリプト -->
+    <script src="lib/jsframe.min.js"></script>
+    <script src="MiniVoxJ_BLE.js"></script>
+  </body>
+</html>
