@@ -7,7 +7,7 @@
 
 ## ファイル
 * [./lib/MiniVoxJ/](./lib/MiniVoxJ/) : エンジンのソースコード (アーキテクチャ非依存)
-* [./](./) : サンプルコードの PlatformIO プロジェクトフォルダ
+* このフォルダ : サンプルコードの PlatformIO プロジェクトフォルダ
 * [./src/](./src/) : サンプルコード
 * [./web_app/usb/](./web_app/usb/) : 上記サンプルコードと通信するWebアプリ (USB接続)
 * [./web_app/ble/](./web_app/ble/) : 上記サンプルコードと通信するWebアプリ (BLE接続)
