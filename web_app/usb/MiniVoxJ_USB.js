@@ -12,15 +12,49 @@ const select_voice = document.getElementById('select_voice'); // 声質選択
 const panel_connect = document.getElementById('panel_connect'); // 接続画面
 const panel_main    = document.getElementById('panel_main');    // メイン画面
 
-/********** シリアル通信の定数・変数 ***********/
-let comPort = null; // COMポート
-let reader = null;  // COMポートのリーダー
-let closeRequested = false;
+/********** コマンドの定数 ***********/
 const COM_PLAY     = 'P'; // 音声再生コマンド
 const COM_VOICE    = 'V'; // 声質設定コマンド
 const CODE_STX     = '#'; // 電文の開始コード
 const CODE_ETX     = '\n'; // 電文の終了コード
 
+/********** シリアル通信の定数・変数 ***********/
+let comPort = null; // COMポート
+let reader = null;  // COMポートのリーダー
+let closeRequested = false;
+
+/********** シリアル通信処理 ***********/
+
+// コマンドの送信
+async function sendCommand(command, data)
+{
+  // 電文の生成
+  const telegram =  CODE_STX + command + data + CODE_ETX;
+  const encoder = new TextEncoder();
+  const byteArray = encoder.encode(telegram);
+
+  // 電文の送信
+  const writer = comPort.writable.getWriter();
+  await writer.write(byteArray);
+  writer.releaseLock();
+}
+
+// COMポートからのデータ受信ループ
+async function startReadLoop(port) {
+  reader = port.readable.getReader();
+  try {
+    while (!closeRequested) {
+      const { value, done } = await reader.read();
+      if (done) break;  // reader.cancel() などで終了
+      if (value) {
+        const text = new TextDecoder("utf-8").decode(value);
+        console.log(text);
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
 /********** UIのイベントハンドラ ***********/
 // 「接続」ボタン
 btn_connect.addEventListener('click', async function () {
@@ -63,8 +97,7 @@ btn_play.addEventListener('click', async function (){
     const kana = text_kana.value;
     if(kana.length > 0){
       // コマンド送信
-      const data = new TextEncoder().encode(kana);
-      await sendCommand(COM_PLAY, data);
+      await sendCommand(COM_PLAY, kana);
     }
   }
 });
@@ -74,47 +107,11 @@ btn_voice.addEventListener('click', async function (){
   if(comPort != null){
     const voiceId = select_voice.selectedIndex.toString();
     // コマンド送信
-    const data = new TextEncoder().encode(voiceId);
-    await sendCommand(COM_VOICE, data);
+    await sendCommand(COM_VOICE, voiceId);
   }
 });
 
-/********** シリアル通信処理 ***********/
-
-// コマンドの送信
-async function sendCommand(command, data)
-{
-  // 電文の生成
-  const telegram =  new Uint8Array(data.length + 3);
-  telegram[0] = CODE_STX.charCodeAt(0);
-  telegram[1] = command.charCodeAt(0);
-  for (let i = 0; i < data.length; i++) {
-    telegram[2 + i] = data[i];
-  }
-  telegram[2 + data.length] = CODE_ETX.charCodeAt(0);
-
-  // 電文の送信
-  const writer = comPort.writable.getWriter();
-  await writer.write(telegram);
-  writer.releaseLock();
-}
-
-// COMポートからのデータ受信ループ
-async function startReadLoop(port) {
-  reader = port.readable.getReader();
-  try {
-    while (!closeRequested) {
-      const { value, done } = await reader.read();
-      if (done) break;  // reader.cancel() などで終了
-      if (value) {
-        const text = new TextDecoder("utf-8").decode(value);
-        console.log(text);
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-}
+/********** トースト ***********/
 
 // トースト表示
 function show_toast(message)

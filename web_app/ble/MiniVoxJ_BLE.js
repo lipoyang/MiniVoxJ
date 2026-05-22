@@ -12,6 +12,12 @@ const select_voice = document.getElementById('select_voice'); // 声質選択
 const panel_connect = document.getElementById('panel_connect'); // 接続画面
 const panel_main    = document.getElementById('panel_main');    // メイン画面
 
+/********** コマンドの定数 ***********/
+const COM_PLAY     = 'P'; // 音声再生コマンド
+const COM_VOICE    = 'V'; // 声質設定コマンド
+const CODE_STX     = '#'; // 電文の開始コード
+const CODE_ETX     = '\n'; // 電文の終了コード
+
 /********** BLEの定数 ***********/
 // BLEサービスのUUID
 const UUID_NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
@@ -31,12 +37,6 @@ const BLEStatus = {
   Connected    : 2
 };
 let btState = BLEStatus.Disconnected;
-
-/********** シリアル通信の定数・変数 ***********/
-const COM_PLAY     = 'P'; // 音声再生コマンド
-const COM_VOICE    = 'V'; // 声質設定コマンド
-const CODE_STX     = '#'; // 電文の開始コード
-const CODE_ETX     = '\n'; // 電文の終了コード
 
 /********** BLE関連の関数 ***********/
 // BLE接続
