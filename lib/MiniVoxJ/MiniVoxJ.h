@@ -81,10 +81,11 @@ struct FormantSeg
 
 // 声種別
 enum class VoiceType {
-	Male = 0, // 
+	Male = 0,
 	Female,
 	Cute,
-	Anime
+	Anime,
+    TypeCount
 };
 
 /**********************************************************

@@ -1,8 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "WavFileCreator.h"
 #include "MiniVoxJ.h"
 
-int main(void)
+// 音声合成
+// voice : 声質
+// text : 音声記号カタカナ文字列
+// filename : 出力WAVファイル名
+int synthesis(VoiceType voice, const char* text, const char* filename)
 {
     const int fs = 16000;       // サンプリング周波数[Hz]
     const int BUFF_SIZE = 256;  // バッファサイズ
@@ -11,13 +16,13 @@ int main(void)
     WavFileCreator wav(fs);
     MiniVoxJ vox(fs, BUFF_SIZE);
 
-    if (wav.create("output.wav") == false) {
+    if (wav.create(filename) == false) {
         printf("Failed to create WAV file.\n");
         return -1;
     }
 
-    vox.setVoiceType(VoiceType::Male);
-    vox.setText("ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテ/イタ'。");
+    vox.setVoiceType(voice);
+    vox.setText(text);
 
     while (true) {
         int size = vox.synthesize(buffer);
@@ -26,7 +31,8 @@ int main(void)
             int status = vox.getStatus();
             if (status == vox.COMPLETE) {
                 printf("synthesizing complete!\n");
-            } else {
+            }
+            else {
                 printf("error! (%d)\n", status);
             }
             break;
@@ -34,6 +40,54 @@ int main(void)
     }
 
     wav.close();
+
+    return 0;
+}
+
+// メイン関数
+int main(int argc, char const* argv[])
+{
+    system("chcp 65001"); // Windowsでコンソールの文字コードをUTF-8にする。(デフォルトはシフトJIS)
+
+    // オプション無しのとき：固定の文字列から音声合成
+    if (argc < 2) {
+        const char* text = 
+            (const char*)"ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテ/イタ'。";
+        
+        synthesis(VoiceType::Male, text, "output.wav");
+        system("start output.wav");
+    }
+    // オプション "i" のとき：対話実行
+    else if (argv[1][0] == 'i')
+    {
+        VoiceType type = VoiceType::Male;
+        char buf[1024];
+        char filename[32];
+        char command[32];
+        int fcnt = 0;
+        printf("Interactive mode\n");
+        while (1) {
+            printf("> ");
+            if (fgets(buf, sizeof(buf), stdin) != NULL) {
+                // vコマンド : 声質設定
+                if (buf[0] == 'v') {
+                    int val = buf[1] - '0';
+                    if (val >= 0 && val < (int)VoiceType::TypeCount) {
+                        type = (VoiceType)val;
+                        printf("Voice type %d\n", (int)type);
+                    }
+                }
+                // それ以外 : 音声合成
+                else {
+                    sprintf(filename, "output%d.wav", fcnt);
+                    synthesis(type, buf, filename);
+                    sprintf(command, "start %s", filename);
+                    system(command);
+                    fcnt++;
+                }
+            }
+        }
+    }
 
     return 0;
 }
