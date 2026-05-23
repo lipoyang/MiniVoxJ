@@ -7,6 +7,8 @@
 
 // 受信バッファサイズ
 #define BLE_BUFF_SIZE 1024
+// ペイロードサイズ
+#define BLE_PAYLOAD_SIZE 255
 
 // BLEコマンド受信クラス
 class BleCom
@@ -18,7 +20,7 @@ public:
 private:
     BLEDevice central;
     bool isConnected;
-    char payload[256];
+    char payload[BLE_PAYLOAD_SIZE + 1];
 
     // 受信処理
     void receive();

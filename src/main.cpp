@@ -27,6 +27,8 @@ SerialCom serialCom;
 // BLEコマンド受信クラス
 BleCom bleCom;
 #endif
+// コマンドの最大長
+const int COMMAND_LEN_MAX = 1024 - 1;
 
 // コマンド受信ハンドラ
 void onReceived(const char* buff)
@@ -38,7 +40,7 @@ void onReceived(const char* buff)
   switch(cmd) {
     case 'P':
       // 音声合成するテキストをセット
-      vox.setText(&buff[1]);
+      vox.setText(&buff[1], COMMAND_LEN_MAX);
       break;
     case 'V':
       // 声質を変更

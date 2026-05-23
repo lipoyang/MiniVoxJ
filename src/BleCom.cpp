@@ -4,8 +4,8 @@
 
 // Nordic UART Service (NUS)
 BLEService       svcNUS("6E400001-B5A3-F393-E0A9-E50E24DCCA9E");
-BLECharacteristic chrRX("6E400002-B5A3-F393-E0A9-E50E24DCCA9E", BLEWrite, 256);
-BLECharacteristic chrTX("6E400003-B5A3-F393-E0A9-E50E24DCCA9E", BLENotify, 256);
+BLECharacteristic chrRX("6E400002-B5A3-F393-E0A9-E50E24DCCA9E", BLEWrite, BLE_PAYLOAD_SIZE);
+BLECharacteristic chrTX("6E400003-B5A3-F393-E0A9-E50E24DCCA9E", BLENotify, BLE_PAYLOAD_SIZE);
 
 // 0x02/0x03だとデバッグしにくいので、#/\n を 電文開始/終了 に使う
 // 電文開始
@@ -71,7 +71,10 @@ void BleCom::loop()
         {
             if (chrRX.written())
             {
-                chrRX.readValue(payload, 256);
+                int bytesRead = chrRX.readValue(payload, BLE_PAYLOAD_SIZE);
+                payload[bytesRead] = '\0';
+                Serial.print("Received: ");
+                Serial.println(payload);
                 this->receive();
             }
         }else{
@@ -88,7 +91,7 @@ void BleCom::receive()
 {
     char c;
     
-    for(int i = 0; i < 256; i++)
+    for(int i = 0; i <= BLE_PAYLOAD_SIZE ; i++)
     {
         if(payload[i] == '\0') break;
         c = payload[i];

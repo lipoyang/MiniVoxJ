@@ -23,6 +23,8 @@ const CODE_ETX     = '\n'; // 電文の終了コード
 const UUID_NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const UUID_NUS_RX_CHAR = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 const UUID_NUS_TX_CHAR = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+// ペイロードの最大値
+const PAYLOAD_MAX = 255;
 
 /********** BLEの変数 ***********/
 // BLEデバイス
@@ -90,11 +92,21 @@ async function sendCommand(command, data)
   const encoder = new TextEncoder();
   const byteArray = encoder.encode(telegram);
 
-  await chrTX.writeValue(byteArray).then(() => {
-    console.log('send:' + command);
-  }).catch(()=>{
-    console.log('send error:' + command);
-  });
+  // ペイロードの分割
+  let chunks = [];
+  for (let i = 0; i < byteArray.length; i += PAYLOAD_MAX) {
+    chunks.push(byteArray.slice(i, i + PAYLOAD_MAX));
+  }
+
+  // 分割したペイロードの送信
+  for (const chunk of chunks) {
+    await chrTX.writeValue(chunk).then(() => {
+      console.log('send:' + chunk.length + ' bytes');
+    }).catch(()=>{
+      console.log('send error:' + chunk.length + ' bytes');
+    });
+    await new Promise(r => setTimeout(r, 50));
+  }
 }
 
 /********** BLEのイベントハンドラ ***********/
