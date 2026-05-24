@@ -52,7 +52,7 @@ int main(int argc, char const* argv[])
     // オプション無しのとき：固定の文字列から音声合成
     if (argc < 2) {
         const char* text = 
-            (const char*)"ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテ/イタ'。";
+            (const char*)"ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテイタ。";
         
         synthesis(VoiceType::Male, text, "output.wav");
         system("start output.wav");

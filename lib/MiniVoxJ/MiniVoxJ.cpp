@@ -283,6 +283,42 @@ static bool isDelimiter(uint16_t ch) {
     }
 }
 
+// 文末かどうか
+// ch: 区切り文字
+// return: 文末ならtrue、そうでなければfalse (読点も文末とみなす)
+static bool isEndOfSentence(uint16_t ch) {
+    switch (ch) {
+        case 0x3001: // 、
+        case 0x3002: // 。
+        case 0x002C: // ,
+        case 0x002E: // .
+        case 0x003F: // ?
+        case 0xFF1F: // ？
+            return true;
+        default:
+            return false;
+    }
+}
+
+// 文末の種類を取得
+// ch: 区切り文字
+// return: 文末の種類
+static SentenceType getSentenceType(uint16_t ch) {
+    switch (ch) {
+        case 0x3001: // 、
+        case 0x002C: // ,
+            return SentenceType::Comma;
+        case 0x3002: // 。
+        case 0x002E: // .
+            return SentenceType::Period;
+        case 0x003F: // ?
+        case 0xFF1F: // ？
+            return SentenceType::Question;
+        default:
+            return SentenceType::None;
+    }
+}
+
 // ポーズ時間
 // ch: 区切り文字
 // return: ポーズ時間[msec]
@@ -330,9 +366,25 @@ static std::vector<Phrase> convertStr2Phrases(const std::vector<uint16_t>& utf16
     // 最後のアクセント句が区切り文字なしで終わった場合
     if (!word.empty()) {
         Phrase phr = convertKana2Mora(word); // カナ列 → モーラ列
-        phr.delimiter = 0; // 区切り文字なし
+        phr.delimiter = 0x002F; // 区切り文字 / を仮に設定
         phrases.push_back(phr);
     }
+
+    // アクセント句の位置と文全体の長さ
+    int phr_cnt = 0;
+    for(int i = 0; i < phrases.size(); i++){
+        phrases[i].phr_pos = phr_cnt;
+        if(isEndOfSentence(phrases[i].delimiter)){
+            int len = phr_cnt + 1;
+            for(int j = i - phr_cnt; j <= i; j++){
+                phrases[j].sent_len = len;
+            }
+            phr_cnt = 0;
+        }else{
+            phr_cnt++;
+        }
+    }
+
     return phrases;
 }
 
@@ -353,48 +405,60 @@ static std::vector<float> computePitch(const Phrase& phrase)
 
     const float k1 = (pitch_HH - pitch_H) / (accent - 1);     // アクセント核より前のピッチの傾き
     const float k2 = (pitch_LL - pitch_L) / (N - 1 - accent); // アクセント核より後のピッチの傾き
-    const float k3 = 0.05f; // 全体に下降するピッチの傾き
-
-    const float e1 = 0.9f;  // アクセント句末を下げる係数
-    const float e2 = 0.8f;  // 通常の文末
-    const float e3 = 1.2f;  // 疑問文の文末
+    const float k3 = 0.9f;  // アクセント句末を下げる係数
+    const float k4 = 0.05f; // 句全体でのピッチの下降
+    const float k5 = 0.05f; // 文全体でのピッチの下降
 
     std::vector<float> pitches(N);
 
     for(int i = 0; i < N; i++)
     {
-        // アクセント核はH(最高)
-        if(i == accent){
-            pitches[i] = pitch_HH;
-        }else{
-            // 1拍目はアクセント核でない場合はL(最低)
+        // 平板型
+        if(accent == N - 1){
             if(i == 0){
                 pitches[i] = pitch_LL;
+            }else{
+                pitches[i] = pitch_H;
             }
-            // それ以外は、アクセント核より前はH、アクセント核より後はL
-            else{
-                if(i < accent){
-                    // アクセント核より前はHからアクセント核に向かって徐々に上がる
-                    pitches[i] = pitch_H + k1 * (i - 1);
-                }else{
-                    // アクセント核より後はLからアクセント核に向かって徐々に下がる
-                    pitches[i] = pitch_L + k2 * (i - accent);
+        }
+        // それ以外
+        else{
+            // アクセント核はH(最高)
+            if(i == accent){
+                pitches[i] = pitch_HH;
+            }else{
+                // 1拍目はアクセント核でない場合はL(最低)
+                if(i == 0){
+                    pitches[i] = pitch_LL;
+                }
+                // それ以外は、アクセント核より前はH、アクセント核より後はL
+                else{
+                    if(i < accent){
+                        // アクセント核より前はHからアクセント核に向かって徐々に上がる
+                        pitches[i] = pitch_H + k1 * (i - 1);
+                    }else{
+                        // アクセント核より後はLからアクセント核に向かって徐々に下がる
+                        pitches[i] = pitch_L + k2 * (i - accent);
+                    }
                 }
             }
         }
-        // 全体に下降する
-        pitches[i] *= 1.0f - k3 * i;
-        
         // アクセント句末を下げる (疑問文の文末は上げる)
         if(i == N - 1){
-            if(delimiter == 0x003F || delimiter == 0xFF1F){ // 疑問文の文末 (? or ？)
-                pitches[i] = e3;
-            }else if(delimiter == 0x002E || delimiter == 0x3002){ // 通常の文末 (. or 。)
-                pitches[i] = e2;
+            SentenceType type = getSentenceType(delimiter);
+            if(type == SentenceType::Question){ // 疑問文の文末
+                pitches[i] = pitch_HH;
+            }else if(type == SentenceType::Period){ // 通常の文末
+                pitches[i] = pitch_LL;
             }else{
-                pitches[i] *= e1;
+                pitches[i] *= k3;
             }
         }
+        // 全体に下降する
+        pitches[i] *= 1.0f - k4 * i / N;
+        pitches[i] *= 1.0f - k5 * phrase.phr_pos / phrase.sent_len;
+
+        // printf("%d / %d : pitch[%d] = %f\n", phrase.phr_pos, phrase.sent_len, i, pitches[i]);
     }
     return pitches;
 }

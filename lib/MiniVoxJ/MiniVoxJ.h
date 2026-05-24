@@ -53,6 +53,16 @@ struct Phrase {
     std::vector<Mora> moras;    // モーラ列
     uint16_t delimiter;         // 区切り文字
     int accent;                 // アクセント核の位置 (0～moras.size()-1)
+    int phr_pos;                // アクセント句の位置 (文頭から0, 1, 2, ...)
+    int sent_len;               // 文全体の長さ (アクセント句数)
+};
+
+// 文末の種類
+enum class SentenceType {
+    Period,   // 句点 (平叙文)
+    Question, // 疑問符 (疑問文)
+    Comma,    // 読点
+    None      // 区切り文字なし
 };
 
 // 励振音源の種類
