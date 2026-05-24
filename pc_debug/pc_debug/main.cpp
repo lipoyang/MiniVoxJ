@@ -7,7 +7,7 @@
 // voice : 声質
 // text : 音声記号カタカナ文字列
 // filename : 出力WAVファイル名
-int synthesis(VoiceType voice, const char* text, const char* filename)
+int synthesis(VoiceType voice, float speed, const char* text, const char* filename)
 {
     const int fs = 16000;       // サンプリング周波数[Hz]
     const int BUFF_SIZE = 256;  // バッファサイズ
@@ -22,6 +22,7 @@ int synthesis(VoiceType voice, const char* text, const char* filename)
     }
 
     vox.setVoiceType(voice);
+    vox.setSpeed(speed);
     vox.setText(text);
 
     while (true) {
@@ -54,13 +55,14 @@ int main(int argc, char const* argv[])
         const char* text = 
             (const char*)"ア'ル/ヒノ'/クレガタノ'/コト'デアル。ヒト'リノ/ゲニンガ'、ラショ'オモンノ/シタデ' アマヤミオ'/マ'ッテイタ。";
         
-        synthesis(VoiceType::Male, text, "output.wav");
+        synthesis(VoiceType::Male, 1.0f, text, "output.wav");
         system("start output.wav");
     }
     // オプション "i" のとき：対話実行
     else if (argv[1][0] == 'i')
     {
         VoiceType type = VoiceType::Male;
+        float speed = 1.0f;
         char buf[1024];
         char filename[32];
         char command[32];
@@ -77,10 +79,23 @@ int main(int argc, char const* argv[])
                         printf("Voice type %d\n", (int)type);
                     }
                 }
+                // sコマンド : 発話速度設定
+                else if (buf[0] == 's') {
+                    float val;
+                    int ret = sscanf(&buf[1], "%f", &val);
+                    if (ret == 1) {
+                        if (val > 0.0f) {
+                            speed = val;
+                            printf("Speed %f\n", speed);
+                        }
+                    } else {
+                        printf("sscanf error\n");
+                    }
+                }
                 // それ以外 : 音声合成
                 else {
                     sprintf(filename, "output%d.wav", fcnt);
-                    synthesis(type, buf, filename);
+                    synthesis(type, speed, buf, filename);
                     sprintf(command, "start %s", filename);
                     system(command);
                     fcnt++;

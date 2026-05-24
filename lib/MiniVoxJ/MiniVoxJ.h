@@ -235,6 +235,7 @@ public:
     int  getSampleCnt() const { return _total_cnt; }
     
     void setVoiceType(VoiceType type) { _voice_type = type; }
+    void setSpeed(float speed) { _speed = (speed > 0.0f) ? speed : 1.0f; }
 
     const int PROCESSING = 0;   // 処理中
     const int COMPLETE = 1;     // 合成完了
@@ -273,4 +274,5 @@ private:
     NoiseGen _noise;    // ノイズ音源
     MixedGen _mixed;    // 混合音源
     VoiceType _voice_type; // 声質
+    float _speed = 1.0f; // 発話速度
 };

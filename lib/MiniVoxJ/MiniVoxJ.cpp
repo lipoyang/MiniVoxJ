@@ -641,7 +641,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
     const FormantParams* nxt = (_seg_cnt + 1 < _formantSegs.size())
                                 ? _formantSegs[_seg_cnt + 1].params : cur;
     // 処理中のフォルマントの長さ(サンプル数)
-    int seg_len = ms2sa(_formantSegs[_seg_cnt].t_ms);
+    int seg_len = ms2sa(_formantSegs[_seg_cnt].t_ms / _speed);
     // ピッチ
     float pitch_cur = _formantSegs[_seg_cnt].pitch;
     float pitch_nxt = (_seg_cnt + 1 < _formantSegs.size()) ? _formantSegs[_seg_cnt + 1].pitch : pitch_cur;
@@ -702,7 +702,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                 cur = _formantSegs[_seg_cnt].params;
                 nxt = (_seg_cnt + 1 < _formantSegs.size())
                     ? _formantSegs[_seg_cnt + 1].params : cur;
-                seg_len = ms2sa(_formantSegs[_seg_cnt].t_ms);
+                seg_len = ms2sa(_formantSegs[_seg_cnt].t_ms / _speed);
 
                 for (Resonator& filter : _resonators) filter.reset();
             }

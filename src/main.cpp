@@ -53,6 +53,19 @@ void onReceived(const char* buff)
           Serial.println("Unknown voice type!");
       }
       break;
+    case 'S':
+      // 発話速度を変更
+      {
+        float speed = atof(&buff[1]);
+        if(speed > 0.0f) {
+          Serial.print("Set speed: ");
+          Serial.println(speed);
+          vox.setSpeed(speed);
+        } else {
+          Serial.println("Invalid speed value!");
+        }
+      }
+      break;
     default:
       Serial.println("Unknown command!");
   }

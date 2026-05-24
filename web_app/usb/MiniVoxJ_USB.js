@@ -4,10 +4,13 @@ const btn_connect    = document.getElementById('btn_connect');     // 接続
 const btn_disconnect = document.getElementById('btn_disconnect');  // 切断
 const btn_play       = document.getElementById('btn_play');        // 文字列の再生
 const btn_voice      = document.getElementById('btn_voice');       // 声質設定
+const btn_speed      = document.getElementById('btn_speed');       // 発話速度設定
 // テキスト
 const text_kana    = document.getElementById('text_kana');  // アクセント付きカタカナ文字列
 // セレクト
 const select_voice = document.getElementById('select_voice'); // 声質選択
+// 入力
+const input_speed  = document.getElementById('input_speed'); // 発話速度入力
 // 表示領域
 const panel_connect = document.getElementById('panel_connect'); // 接続画面
 const panel_main    = document.getElementById('panel_main');    // メイン画面
@@ -15,6 +18,7 @@ const panel_main    = document.getElementById('panel_main');    // メイン画�
 /********** コマンドの定数 ***********/
 const COM_PLAY     = 'P'; // 音声再生コマンド
 const COM_VOICE    = 'V'; // 声質設定コマンド
+const COM_SPEED    = 'S'; // 発話速度設定コマンド
 const CODE_STX     = '#'; // 電文の開始コード
 const CODE_ETX     = '\n'; // 電文の終了コード
 
@@ -108,6 +112,15 @@ btn_voice.addEventListener('click', async function (){
     const voiceId = select_voice.selectedIndex.toString();
     // コマンド送信
     await sendCommand(COM_VOICE, voiceId);
+  }
+});
+
+// 「発話速度設定」ボタン
+btn_speed.addEventListener('click', async function (){
+  if(comPort != null){
+    const speed = input_speed.value.toString();
+    // コマンド送信
+    await sendCommand(COM_SPEED, speed);
   }
 });
 
