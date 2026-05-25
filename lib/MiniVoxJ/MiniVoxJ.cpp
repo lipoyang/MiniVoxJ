@@ -63,18 +63,18 @@ static constexpr FormantParams ConsN  = { 250, 1700, 2600, 180, 200, 250, 0.3f, 
 static constexpr FormantParams ConsM  = { 250, 1000, 2200, 180, 200, 250, 0.3f, FormantType::Nosal };
 
 // 無声摩擦音 ɕ, s, h, ç, ɸ (シ・ス・ハ・ヒ・フ)
-static constexpr FormantParams ConsSj = { 200, 3800, 6000, 500, 2500, 2000, 0.4f,  FormantType::Fricative };
-static constexpr FormantParams ConsS  = { 200, 5500, 7500, 500, 3000, 2000, 0.4f,  FormantType::Fricative };
+static constexpr FormantParams ConsSj = { 200, 3800, 6000, 500, 2500, 2000, 0.08f, FormantType::Fricative };
+static constexpr FormantParams ConsS  = { 200, 5500, 7500, 500, 3000, 2000, 0.08f, FormantType::Fricative };
 static constexpr FormantParams ConsHa = { 800, 1200, 2600, 200,  300,  400, 0.15f, FormantType::Fricative };
 static constexpr FormantParams ConsHe = { 500, 1900, 2600, 200,  300,  400, 0.15f, FormantType::Fricative };
 static constexpr FormantParams ConsHo = { 500,  800, 2400, 200,  300,  400, 0.15f, FormantType::Fricative };
-static constexpr FormantParams ConsCh = { 200, 3000, 5000, 500, 2000, 2000, 0.3f,  FormantType::Fricative };
+static constexpr FormantParams ConsCh = { 200, 3000, 5000, 500, 2000, 2000, 0.10f, FormantType::Fricative };
 static constexpr FormantParams ConsPh = { 200, 2500, 4000, 500, 3000, 2000, 0.15f, FormantType::Fricative };
 // ※ h は後続の母音によって変種あり
 
 // 有声摩擦音 ʑ, z (ジ・ズ)
-static constexpr FormantParams ConsZj = { 200, 3800, 6000, 500, 2500, 2000, 0.3f, FormantType::VFricative };
-static constexpr FormantParams ConsZ  = { 200, 5500, 7500, 500, 3000, 2000, 0.3f, FormantType::VFricative };
+static constexpr FormantParams ConsZj = { 200, 3800, 6000, 500, 2500, 2000, 0.1f, FormantType::VFricative };
+static constexpr FormantParams ConsZ  = { 200, 5500, 7500, 500, 3000, 2000, 0.1f, FormantType::VFricative };
 
 // 促音や無声破裂音・破擦音の無音区間
 static constexpr FormantParams Silence = { 100, 100, 100, 100, 100, 100, 0.0f, FormantType::Silence };
@@ -84,17 +84,17 @@ static constexpr FormantParams VoiceBar = { 200, 200, 200, 100, 200, 300, 0.08f,
 
 // 破裂音・破擦音のバースト (無声・有声 共通)
 // k, t, p, tɕ, ts / g, d, b, dʑ, dz
-static constexpr FormantParams BurstK   = { 300, 1800, 2600, 500, 2000, 2000, 0.30f, FormantType::Burst };
-static constexpr FormantParams BurstT   = { 300, 4000, 5000, 500, 2000, 2000, 0.35f, FormantType::Burst };
-static constexpr FormantParams BurstP   = { 300, 1000, 2300, 500, 1500, 2000, 0.30f, FormantType::Burst };
-static constexpr FormantParams BurstTSj = { 300, 3800, 6000, 500, 2000, 2000, 0.35f, FormantType::Burst };
-static constexpr FormantParams BurstTS  = { 300, 5500, 7500, 500, 2500, 2000, 0.35f, FormantType::Burst };
+static constexpr FormantParams BurstK   = { 300, 1800, 2600, 500, 2000, 2000, 0.05f, FormantType::Burst };
+static constexpr FormantParams BurstT   = { 300, 4000, 5000, 500, 2000, 2000, 0.06f, FormantType::Burst };
+static constexpr FormantParams BurstP   = { 300, 1000, 2300, 500, 1500, 2000, 0.05f, FormantType::Burst };
+static constexpr FormantParams BurstTSj = { 300, 3800, 6000, 500, 2000, 2000, 0.06f, FormantType::Burst };
+static constexpr FormantParams BurstTS  = { 300, 5500, 7500, 500, 2500, 2000, 0.06f, FormantType::Burst };
 
 // 破裂音のVOT (無声・有声 共通)
 // k, t, p / g, d, b
-static constexpr FormantParams VotK = { 800, 1200, 2600, 300, 400, 500, 0.10f, FormantType::VOT };
-static constexpr FormantParams VotT = { 800, 1200, 2600, 300, 400, 500, 0.10f, FormantType::VOT };
-static constexpr FormantParams VotP = { 800, 1200, 2600, 300, 400, 500, 0.10f, FormantType::VOT };
+static constexpr FormantParams VotK = { 800, 1200, 2600, 300, 400, 500, 0.03f, FormantType::VOT };
+static constexpr FormantParams VotT = { 800, 1200, 2600, 300, 400, 500, 0.03f, FormantType::VOT };
+static constexpr FormantParams VotP = { 800, 1200, 2600, 300, 400, 500, 0.03f, FormantType::VOT };
 
 // フォルマントの種別ごとの励振の種類
 static constexpr SourceType SourceTypeTable[] = {
