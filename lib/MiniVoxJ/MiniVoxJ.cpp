@@ -696,12 +696,13 @@ int MiniVoxJ::synthesize(int16_t* buffer)
         case SourceType::Mixed:   s = _mixed.get(f0);   break;
         default: s = _impulse.get(f0);
         }
+        s *= _gain;
 
         // 共振フィルタを順次通す
         for (Resonator& filter : _resonators) s = filter.process(s);
 
         // バッファに出力
-        float output = Amp * _gain * s;
+        float output = Amp * s;
         if (output >  32767.0f) output =  32767.0f;
         if (output < -32767.0f) output = -32767.0f;
         buffer[cnt] = static_cast<int16_t>(output);
@@ -723,7 +724,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                     ? _formantSegs[_seg_cnt + 1].params : cur;
                 seg_len = ms2sa(_formantSegs[_seg_cnt].t_ms / _speed);
 
-                for (Resonator& filter : _resonators) filter.reset();
+                // for (Resonator& filter : _resonators) filter.reset();
             }
         }
     }
