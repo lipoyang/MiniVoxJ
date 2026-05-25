@@ -48,6 +48,20 @@ struct Mora
     Vowel v;     // 母音
 };
 
+// フォルマントの種類
+enum class FormantType {
+    Vowel = 0,  // 母音
+    Semivowel,  // 半母音
+    Tap,        // たたき音
+    Nosal,      // 鼻音
+    Fricative,  // 無声摩擦音
+    VFricative, // 有声摩擦音
+    Silence,    // 無音
+    VoiceBar,   // ボイスバー
+    Burst,      // バースト
+    VOT,        // VOT (Voice Onset Time)
+};
+
 // アクセント句
 struct Phrase {
     std::vector<Mora> moras;    // モーラ列
@@ -78,7 +92,7 @@ struct FormantParams
     float f1, f2, f3;       // フォルマント周波数(第1, 第2, 第3)
     float bw1, bw2, bw3;    // フォルマント帯域幅(第1, 第2, 第3)
     float gain;             // ゲイン
-    SourceType source;      // 励振の種類
+    FormantType type;       // 種類
 };
 
 // フォルマント区間
@@ -174,8 +188,7 @@ public:
         for (int i = 0; i < 12; i++) {
             sum += random();
         }
-        float val = sum - 6.0f;
-        val /= 6.0;
+        float val = sum / 12.0f;
         if(val > 1.0f) val = 1.0f;
         if(val < -1.0f) val = -1.0f;
         return val;
@@ -225,8 +238,7 @@ public:
         _SlotLen(sampleRate * T_SLOT / 1000),
         _impulse((float)sampleRate),
         _noise(),
-        _mixed(&_impulse, &_noise),
-        _voice_type(VoiceType::Male){}
+        _mixed(&_impulse, &_noise) {}
 
     bool setText(const char* utf8_str, int max = 255);
     int  synthesize(int16_t* buffer);
@@ -269,10 +281,11 @@ private:
     int _status = COMPLETE;// ステータス
     float _gain = 1.0f; // ゲイン
     float _pitch = 1.0f;// ピッチ
+    FormantType _formant_type = FormantType::Vowel; // フォルマントの種類
     SourceType _source = SourceType::Impulse; // 励振音源の種類
     ImpulseGen _impulse;// インパルス音源
     NoiseGen _noise;    // ノイズ音源
     MixedGen _mixed;    // 混合音源
-    VoiceType _voice_type; // 声質
+    VoiceType _voice_type = VoiceType::Male; // 声質
     float _speed = 1.0f; // 発話速度
 };

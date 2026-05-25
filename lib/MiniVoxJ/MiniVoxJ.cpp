@@ -45,56 +45,70 @@ static constexpr Mora KANA_TO_MORA[83] = {
 //********** フォルマントパラメータ **********
 
 // 母音 a,i,ɯ,e,o
-static constexpr FormantParams VowelA = { 800, 1200, 2600, 80, 100, 120, 1.0f, SourceType::Impulse };
-static constexpr FormantParams VowelI = { 300, 2300, 3000, 80, 120, 150, 1.0f, SourceType::Impulse };
-static constexpr FormantParams VowelU = { 350, 1300, 2500, 80, 100, 120, 1.0f, SourceType::Impulse };
-static constexpr FormantParams VowelE = { 500, 1900, 2600, 80, 100, 120, 1.0f, SourceType::Impulse };
-static constexpr FormantParams VowelO = { 500,  800, 2400, 80, 100, 120, 1.0f, SourceType::Impulse };
+static constexpr FormantParams VowelA = { 800, 1200, 2600, 80, 100, 120, 1.0f, FormantType::Vowel };
+static constexpr FormantParams VowelI = { 300, 2300, 3000, 80, 120, 150, 1.0f, FormantType::Vowel };
+static constexpr FormantParams VowelU = { 350, 1300, 2500, 80, 100, 120, 1.0f, FormantType::Vowel };
+static constexpr FormantParams VowelE = { 500, 1900, 2600, 80, 100, 120, 1.0f, FormantType::Vowel };
+static constexpr FormantParams VowelO = { 500,  800, 2400, 80, 100, 120, 1.0f, FormantType::Vowel };
 
 // 半母音 j, w (ヤ行・ワ行)
-static constexpr FormantParams ConsJ  = { 280, 2300, 3000, 80, 100, 120, 1.0f, SourceType::Impulse };
-static constexpr FormantParams ConsW  = { 320, 750,  2300, 80, 100, 120, 1.0f, SourceType::Impulse };
+static constexpr FormantParams ConsJ  = { 280, 2300, 3000, 80, 100, 120, 1.0f, FormantType::Semivowel };
+static constexpr FormantParams ConsW  = { 320, 750,  2300, 80, 100, 120, 1.0f, FormantType::Semivowel };
 
-// 弾き音 ɾ (ラ行)
-static constexpr FormantParams ConsR  = { 350, 1500, 2500, 80, 120, 150, 0.3f, SourceType::Impulse };
+// たたき音 ɾ (ラ行)
+static constexpr FormantParams ConsR  = { 350, 1500, 2500, 80, 120, 150, 0.3f, FormantType::Tap };
 
 // 鼻音 n, m
-static constexpr FormantParams ConsN  = { 250, 1700, 2600, 180, 200, 250, 0.3f, SourceType::Impulse };
-static constexpr FormantParams ConsM  = { 250, 1000, 2200, 180, 200, 250, 0.3f, SourceType::Impulse };
+static constexpr FormantParams ConsN  = { 250, 1700, 2600, 180, 200, 250, 0.3f, FormantType::Nosal };
+static constexpr FormantParams ConsM  = { 250, 1000, 2200, 180, 200, 250, 0.3f, FormantType::Nosal };
 
 // 無声摩擦音 ɕ, s, h, ç, ɸ (シ・ス・ハ・ヒ・フ)
-static constexpr FormantParams ConsSj = { 200, 3800, 6000, 500, 2500, 2000, 0.4f,  SourceType::Noise };
-static constexpr FormantParams ConsS  = { 200, 5500, 7500, 500, 3000, 2000, 0.4f,  SourceType::Noise };
-static constexpr FormantParams ConsHa = { 800, 1200, 2600, 200,  300,  400, 0.15f, SourceType::Noise };
-static constexpr FormantParams ConsHe = { 500, 1900, 2600, 200,  300,  400, 0.15f, SourceType::Noise };
-static constexpr FormantParams ConsHo = { 500,  800, 2400, 200,  300,  400, 0.15f, SourceType::Noise };
-static constexpr FormantParams ConsCh = { 200, 3000, 5000, 500, 2000, 2000, 0.3f,  SourceType::Noise };
-static constexpr FormantParams ConsPh = { 200, 2500, 4000, 500, 3000, 2000, 0.15f, SourceType::Noise };
+static constexpr FormantParams ConsSj = { 200, 3800, 6000, 500, 2500, 2000, 0.4f,  FormantType::Fricative };
+static constexpr FormantParams ConsS  = { 200, 5500, 7500, 500, 3000, 2000, 0.4f,  FormantType::Fricative };
+static constexpr FormantParams ConsHa = { 800, 1200, 2600, 200,  300,  400, 0.15f, FormantType::Fricative };
+static constexpr FormantParams ConsHe = { 500, 1900, 2600, 200,  300,  400, 0.15f, FormantType::Fricative };
+static constexpr FormantParams ConsHo = { 500,  800, 2400, 200,  300,  400, 0.15f, FormantType::Fricative };
+static constexpr FormantParams ConsCh = { 200, 3000, 5000, 500, 2000, 2000, 0.3f,  FormantType::Fricative };
+static constexpr FormantParams ConsPh = { 200, 2500, 4000, 500, 3000, 2000, 0.15f, FormantType::Fricative };
 // ※ h は後続の母音によって変種あり
 
 // 有声摩擦音 ʑ, z (ジ・ズ)
-static constexpr FormantParams ConsZj = { 200, 3800, 6000, 500, 2500, 2000, 0.3f, SourceType::Mixed };
-static constexpr FormantParams ConsZ  = { 200, 5500, 7500, 500, 3000, 2000, 0.3f, SourceType::Mixed };
+static constexpr FormantParams ConsZj = { 200, 3800, 6000, 500, 2500, 2000, 0.3f, FormantType::VFricative };
+static constexpr FormantParams ConsZ  = { 200, 5500, 7500, 500, 3000, 2000, 0.3f, FormantType::VFricative };
 
 // 促音や無声破裂音・破擦音の無音区間
-static constexpr FormantParams Silence = { 100, 100, 100, 100, 100, 100, 0.0f, SourceType::Impulse };
+static constexpr FormantParams Silence = { 100, 100, 100, 100, 100, 100, 0.0f, FormantType::Silence };
 
 // 有声破裂音・破擦音の閉鎖区間 (ボイスバー)
-static constexpr FormantParams VoiceBar = { 200, 200, 200, 100, 200, 300, 0.08f, SourceType::Impulse };
+static constexpr FormantParams VoiceBar = { 200, 200, 200, 100, 200, 300, 0.08f, FormantType::VoiceBar };
 
 // 破裂音・破擦音のバースト (無声・有声 共通)
 // k, t, p, tɕ, ts / g, d, b, dʑ, dz
-static constexpr FormantParams BurstK   = { 300, 1800, 2600, 500, 2000, 2000, 0.30f, SourceType::Noise };
-static constexpr FormantParams BurstT   = { 300, 4000, 5000, 500, 2000, 2000, 0.35f, SourceType::Noise };
-static constexpr FormantParams BurstP   = { 300, 1000, 2300, 500, 1500, 2000, 0.30f, SourceType::Noise };
-static constexpr FormantParams BurstTSj = { 300, 3800, 6000, 500, 2000, 2000, 0.35f, SourceType::Noise };
-static constexpr FormantParams BurstTS  = { 300, 5500, 7500, 500, 2500, 2000, 0.35f, SourceType::Noise };
+static constexpr FormantParams BurstK   = { 300, 1800, 2600, 500, 2000, 2000, 0.30f, FormantType::Burst };
+static constexpr FormantParams BurstT   = { 300, 4000, 5000, 500, 2000, 2000, 0.35f, FormantType::Burst };
+static constexpr FormantParams BurstP   = { 300, 1000, 2300, 500, 1500, 2000, 0.30f, FormantType::Burst };
+static constexpr FormantParams BurstTSj = { 300, 3800, 6000, 500, 2000, 2000, 0.35f, FormantType::Burst };
+static constexpr FormantParams BurstTS  = { 300, 5500, 7500, 500, 2500, 2000, 0.35f, FormantType::Burst };
 
 // 破裂音のVOT (無声・有声 共通)
 // k, t, p / g, d, b
-static constexpr FormantParams VotK = { 800, 1200, 2600, 300, 400, 500, 0.10f, SourceType::Noise };
-static constexpr FormantParams VotT = { 800, 1200, 2600, 300, 400, 500, 0.10f, SourceType::Noise };
-static constexpr FormantParams VotP = { 800, 1200, 2600, 300, 400, 500, 0.10f, SourceType::Noise };
+static constexpr FormantParams VotK = { 800, 1200, 2600, 300, 400, 500, 0.10f, FormantType::VOT };
+static constexpr FormantParams VotT = { 800, 1200, 2600, 300, 400, 500, 0.10f, FormantType::VOT };
+static constexpr FormantParams VotP = { 800, 1200, 2600, 300, 400, 500, 0.10f, FormantType::VOT };
+
+// フォルマントの種別ごとの励振の種類
+static constexpr SourceType SourceTypeTable[] = {
+    SourceType::Impulse,    // 母音
+    SourceType::Impulse,    // 半母音
+    SourceType::Impulse,    // たたき音
+    SourceType::Impulse,    // 鼻音
+    SourceType::Noise,      // 無声摩擦音
+    SourceType::Mixed,      // 有声摩擦音
+    SourceType::Impulse,    // 無音
+    SourceType::Impulse,    // ボイスバー
+    SourceType::Noise,      // バースト
+    SourceType::Noise       // VOT
+};
 
 //********** 音価 **********
 typedef std::initializer_list<FormantSeg> Phone;
@@ -581,7 +595,11 @@ static std::vector<FormantSeg> convertPhrases2FormantSeg(const std::vector<Phras
 // a: 現在のフォルマントパラメータ
 // b: 次のフォルマントパラメータ
 // k: 相補係数 (0～1)
-static FormantParams interpolate(const FormantParams& a, const FormantParams& b, float k) {
+static FormantParams interpolate(const FormantParams& a, const FormantParams& b, float k)
+{
+    SourceType a_source = SourceTypeTable[(int)a.type];
+    SourceType b_source = SourceTypeTable[(int)b.type];
+
     return {
         a.f1 + (b.f1 - a.f1) * k,
         a.f2 + (b.f2 - a.f2) * k,
@@ -589,8 +607,8 @@ static FormantParams interpolate(const FormantParams& a, const FormantParams& b,
         a.bw1 + (b.bw1 - a.bw1) * k,
         a.bw2 + (b.bw2 - a.bw2) * k,
         a.bw3 + (b.bw3 - a.bw3) * k,
-        (a.source == b.source) ? a.gain + (b.gain - a.gain) * k : a.gain,
-        a.source,  // 励振音源の種類は現在のものを使用）
+        (a_source == b_source) ? a.gain + (b.gain - a.gain) * k : a.gain,
+        a.type,  // (種類は現在のものを使用）
     };
 }
 
@@ -662,7 +680,8 @@ int MiniVoxJ::synthesize(int16_t* buffer)
             _resonators[1].set(p.f2 * kf, p.bw2);
             _resonators[2].set(p.f3 * kf, p.bw3);
             _gain = p.gain;
-            _source = p.source;
+            _source = SourceTypeTable[(int)p.type];
+            _formant_type = p.type;
 
             // ピッチも滑らかにつなぐ
             _pitch = pitch_cur + (pitch_nxt - pitch_cur) * k;
