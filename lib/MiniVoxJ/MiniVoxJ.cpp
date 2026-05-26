@@ -11,6 +11,9 @@
 constexpr float Amp = 0.5f * 32767.0f; // 振幅
 constexpr float F0[] = {160.0f, 220.0f, 280.0f, 330.0f}; // 基本周波数
 constexpr float KF[] = {  1.0f,   1.15f,  1.3f,   1.5f}; // フォルマント周波数の倍率
+constexpr int   MoraLen = 180; // モーラの長さ[msec]
+constexpr int   VowelLenMin = 60;  // 母音の長さ最小値[msec]
+constexpr int   VowelLenMax = 120; // 母音の長さ最大値[msec]
 
 // Unicode
 static constexpr uint16_t KANA_BEGIN = 0x30A1; // カタカナの最初 ァ
@@ -481,13 +484,27 @@ static std::vector<float> computePitch(const Phrase& phrase)
 // segs: フォルマント区間列
 // phone: 音価
 // pitch: ピッチ
-static void formantSegAdd(std::vector<FormantSeg> &segs, const Phone &phone, float pitch)
-{
+// vowel_len: 長さ[msec] (母音の場合のみ。無指定(=0)なら既定の長さ)
+// returns: 追加したフォルマント区間の長さの合計[msec]
+static int formantSegAdd(std::vector<FormantSeg> &segs, const Phone &phone, float pitch, int vowel_len = 0)
+{   
+    int len = 0;
     for (const FormantSeg &seg : phone) {
         FormantSeg s = seg;
         s.pitch = pitch;
+        if(vowel_len != 0){ // 母音の長さ
+            if(s.params == &ConsJ){
+                vowel_len -= s.t_ms; // 母音が ャ・ュ・ョ の場合、半母音のぶんだけ母音の長さを引く
+            }else{
+                s.t_ms = vowel_len; // 母音の長さ
+                if(s.t_ms < VowelLenMin) s.t_ms = VowelLenMin; // 母音の長さの最小値
+                if(s.t_ms > VowelLenMax) s.t_ms = VowelLenMax; // 母音の長さの最大値
+            }
+        }
         segs.push_back(s);
+        len += s.t_ms;
     }
+    return len;
 }
 
 // モーラ列をフォルマント区間列に変換
@@ -516,49 +533,51 @@ static std::vector<FormantSeg> convertMora2FormantSeg(const std::vector<Mora>& m
             continue;
         }
         // 子音
+        int consonant_len = 0;
         switch (m.c) {
         case _0:  break;
-        case K:   formantSegAdd(segs, C_K,   pitch); break; // k  カ
-        case G:   formantSegAdd(segs, C_G,   pitch); break; // g  ガ
-        case S:   formantSegAdd(segs, C_S,   pitch); break; // s  ス
-        case Sj:  formantSegAdd(segs, C_Sj,  pitch); break; // ɕ  シ
-        case DZj: formantSegAdd(segs, C_DZj, pitch); break; // dʑ ジ
-        case DZ:  formantSegAdd(segs, C_DZ,  pitch); break; // dz ズ
-        case T:   formantSegAdd(segs, C_T,   pitch); break; // t  タ
-        case D:   formantSegAdd(segs, C_D,   pitch); break; // d  ダ
-        case TSj: formantSegAdd(segs, C_TSj, pitch); break; // tɕ チ
-        case TS:  formantSegAdd(segs, C_TS,  pitch); break; // ts ツ
-        case N:   formantSegAdd(segs, C_N,   pitch); break; // n  ナ
+        case K:   consonant_len = formantSegAdd(segs, C_K,   pitch); break; // k  カ
+        case G:   consonant_len = formantSegAdd(segs, C_G,   pitch); break; // g  ガ
+        case S:   consonant_len = formantSegAdd(segs, C_S,   pitch); break; // s  ス
+        case Sj:  consonant_len = formantSegAdd(segs, C_Sj,  pitch); break; // ɕ  シ
+        case DZj: consonant_len = formantSegAdd(segs, C_DZj, pitch); break; // dʑ ジ
+        case DZ:  consonant_len = formantSegAdd(segs, C_DZ,  pitch); break; // dz ズ
+        case T:   consonant_len = formantSegAdd(segs, C_T,   pitch); break; // t  タ
+        case D:   consonant_len = formantSegAdd(segs, C_D,   pitch); break; // d  ダ
+        case TSj: consonant_len = formantSegAdd(segs, C_TSj, pitch); break; // tɕ チ
+        case TS:  consonant_len = formantSegAdd(segs, C_TS,  pitch); break; // ts ツ
+        case N:   consonant_len = formantSegAdd(segs, C_N,   pitch); break; // n  ナ
         case H:
         {
             switch (m.v) {
-            case A:  formantSegAdd(segs, C_Ha, pitch); break; // h ハ
-            case E:  formantSegAdd(segs, C_He, pitch); break; // h ヘ
-            case O:  formantSegAdd(segs, C_Ho, pitch); break; // h ホ
+            case A:  consonant_len = formantSegAdd(segs, C_Ha, pitch); break; // h ハ
+            case E:  consonant_len = formantSegAdd(segs, C_He, pitch); break; // h ヘ
+            case O:  consonant_len = formantSegAdd(segs, C_Ho, pitch); break; // h ホ
             default: break;
             }
         }
         break;
-        case Ch:  formantSegAdd(segs, C_Ch, pitch);  break; // ç ヒ
-        case Ph:  formantSegAdd(segs, C_Ph, pitch);  break; // ɸ フ
-        case P:   formantSegAdd(segs, C_P,  pitch);  break; // p パ
-        case B:   formantSegAdd(segs, C_B,  pitch);  break; // b バ
-        case M:   formantSegAdd(segs, C_M,  pitch);  break; // m マ
-        case J:   formantSegAdd(segs, C_J,  pitch);  break; // j ヤ
-        case R:   formantSegAdd(segs, C_R,  pitch);  break; // ɾ ラ
-        case W:   formantSegAdd(segs, C_W,  pitch);  break; // w ワ
+        case Ch:  consonant_len = formantSegAdd(segs, C_Ch, pitch);  break; // ç ヒ
+        case Ph:  consonant_len = formantSegAdd(segs, C_Ph, pitch);  break; // ɸ フ
+        case P:   consonant_len = formantSegAdd(segs, C_P,  pitch);  break; // p パ
+        case B:   consonant_len = formantSegAdd(segs, C_B,  pitch);  break; // b バ
+        case M:   consonant_len = formantSegAdd(segs, C_M,  pitch);  break; // m マ
+        case J:   consonant_len = formantSegAdd(segs, C_J,  pitch);  break; // j ヤ
+        case R:   consonant_len = formantSegAdd(segs, C_R,  pitch);  break; // ɾ ラ
+        case W:   consonant_len = formantSegAdd(segs, C_W,  pitch);  break; // w ワ
         default: break;
         }
         // 母音
+        int vowel_len = MoraLen - consonant_len; // 母音の長さ = モーラの長さ - 子音の長さ
         switch (m.v) {
-        case A:   formantSegAdd(segs, V_A,  pitch); break; // ア a
-        case I:   formantSegAdd(segs, V_I,  pitch); break; // イ i
-        case U:   formantSegAdd(segs, V_U,  pitch); break; // ウ ɯ
-        case E:   formantSegAdd(segs, V_E,  pitch); break; // エ e
-        case O:   formantSegAdd(segs, V_O,  pitch); break; // オ o
-        case jA:  formantSegAdd(segs, V_jA, pitch); break; // ャ ^ja
-        case jU:  formantSegAdd(segs, V_jU, pitch); break; // ュ ^jɯ
-        case jO:  formantSegAdd(segs, V_jO, pitch); break; // ョ ^jo
+        case A:   formantSegAdd(segs, V_A,  pitch, vowel_len); break; // ア a
+        case I:   formantSegAdd(segs, V_I,  pitch, vowel_len); break; // イ i
+        case U:   formantSegAdd(segs, V_U,  pitch, vowel_len); break; // ウ ɯ
+        case E:   formantSegAdd(segs, V_E,  pitch, vowel_len); break; // エ e
+        case O:   formantSegAdd(segs, V_O,  pitch, vowel_len); break; // オ o
+        case jA:  formantSegAdd(segs, V_jA, pitch, vowel_len); break; // ャ ^ja
+        case jU:  formantSegAdd(segs, V_jU, pitch, vowel_len); break; // ュ ^jɯ
+        case jO:  formantSegAdd(segs, V_jO, pitch, vowel_len); break; // ョ ^jo
         default: break;
         }
     }
@@ -659,7 +678,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
     const FormantParams* nxt = (_seg_cnt + 1 < _formantSegs.size())
                                 ? _formantSegs[_seg_cnt + 1].params : cur;
     // 処理中のフォルマントの長さ(サンプル数)
-    int seg_len = ms2sa(_formantSegs[_seg_cnt].t_ms / _speed);
+    int seg_len = ms2sa((int)((float)_formantSegs[_seg_cnt].t_ms / _speed));
     // ピッチ
     float pitch_cur = _formantSegs[_seg_cnt].pitch;
     float pitch_nxt = (_seg_cnt + 1 < _formantSegs.size()) ? _formantSegs[_seg_cnt + 1].pitch : pitch_cur;
@@ -722,7 +741,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                 cur = _formantSegs[_seg_cnt].params;
                 nxt = (_seg_cnt + 1 < _formantSegs.size())
                     ? _formantSegs[_seg_cnt + 1].params : cur;
-                seg_len = ms2sa(_formantSegs[_seg_cnt].t_ms / _speed);
+                seg_len = ms2sa((int)((float)_formantSegs[_seg_cnt].t_ms / _speed));
 
                 // for (Resonator& filter : _resonators) filter.reset();
             }
