@@ -618,18 +618,30 @@ static FormantParams interpolate(const FormantParams& a, const FormantParams& b,
 {
     SourceType a_source = SourceTypeTable[(int)a.type];
     SourceType b_source = SourceTypeTable[(int)b.type];
+    float f1, f2, f3, bw1, bw2, bw3, gain;
+
+    if(a_source == b_source){
+        f1 = a.f1 + (b.f1 - a.f1) * k;
+        f2 = a.f2 + (b.f2 - a.f2) * k;
+        f3 = a.f3 + (b.f3 - a.f3) * k;
+        bw1 = a.bw1 + (b.bw1 - a.bw1) * k;
+        bw2 = a.bw2 + (b.bw2 - a.bw2) * k;
+        bw3 = a.bw3 + (b.bw3 - a.bw3) * k;
+        gain = a.gain + (b.gain - a.gain) * k;
+    }else{
+        f1 = a.f1;
+        f2 = a.f2;
+        f3 = a.f3;
+        bw1 = a.bw1;
+        bw2 = a.bw2;
+        bw3 = a.bw3;
+        gain = a.gain;
+    }
+    if(a.gain == 0.0f) gain = 0.0f;
+    FormantType type = a.type;
 
     return {
-        a.f1 + (b.f1 - a.f1) * k,
-        a.f2 + (b.f2 - a.f2) * k,
-        a.f3 + (b.f3 - a.f3) * k,
-        a.bw1 + (b.bw1 - a.bw1) * k,
-        a.bw2 + (b.bw2 - a.bw2) * k,
-        a.bw3 + (b.bw3 - a.bw3) * k,
-        (a.gain == 0.0f) ? 0.0f : // 無音区間は補間せず 
-            (a_source != b_source) ?  a.gain : // 前後の音源が異なれば補間せず
-                a.gain + (b.gain - a.gain) * k,
-        a.type,  // (種類は現在のものを使用）
+        f1, f2, f3, bw1, bw2, bw3, gain, type
     };
 }
 
@@ -700,16 +712,25 @@ int MiniVoxJ::synthesize(int16_t* buffer)
 
             // 共振フィルタ係数とゲインの設定
             const float kf = KF[(int)_voice_type];
+#if 1
             _resonators[0].set(p.f1 * kf, p.bw1);
             _resonators[1].set(p.f2 * kf, p.bw2);
             _resonators[2].set(p.f3 * kf, p.bw3);
             _gain = p.gain;
             _source = SourceTypeTable[(int)p.type];
             _formant_type = p.type;
+#else
+            _resonators[0].set(cur->f1 * kf, cur->bw1);
+            _resonators[1].set(cur->f2 * kf, cur->bw2);
+            _resonators[2].set(cur->f3 * kf, cur->bw3);
+            _gain = cur->gain;
+            _source = SourceTypeTable[(int)cur->type];
+            _formant_type = cur->type;
+#endif
 
             // ピッチも滑らかにつなぐ
             _pitch = pitch_cur + (pitch_nxt - pitch_cur) * k;
-
+#if 1
             // 無音からの始まりも滑らかに
             if(prv->gain == 0.0f){
                 float kg = (t < 0.3f) ? t / 0.3f : 1.0f;
@@ -723,6 +744,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                 float gain = prv->gain + (cur->gain - prv->gain) * kg;
                 _gain *= gain;
             }
+#endif            
         }
 
         // 励振音源
@@ -763,12 +785,13 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                 prv = _formantSegs[_seg_cnt - 1].params;
 
                 seg_len = ms2sa((int)((float)_formantSegs[_seg_cnt].t_ms / _speed));
-
-                if(prv == &Silence){
+#if 1
+                if(prv == &Silence || cur == &Silence){
                     // 無音区間からの変化なら一旦リセット
                     for (Resonator& filter : _resonators) filter.reset();
                     _impulse.reset();
                 }
+#endif
             }
         }
     }
