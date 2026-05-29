@@ -626,7 +626,9 @@ static FormantParams interpolate(const FormantParams& a, const FormantParams& b,
         a.bw1 + (b.bw1 - a.bw1) * k,
         a.bw2 + (b.bw2 - a.bw2) * k,
         a.bw3 + (b.bw3 - a.bw3) * k,
-        (a_source == b_source) ? a.gain + (b.gain - a.gain) * k : a.gain,
+        (a.gain == 0.0f) ? 0.0f : // 無音区間は補間せず 
+            (a_source != b_source) ?  a.gain : // 前後の音源が異なれば補間せず
+                a.gain + (b.gain - a.gain) * k,
         a.type,  // (種類は現在のものを使用）
     };
 }
@@ -655,7 +657,7 @@ bool MiniVoxJ::setText(const char* utf8_str, int max)
     _sub_cnt = 0;
     _total_cnt = 0;
     _status = PROCESSING;
-    _gain = 1.0f;
+    _gain = 0.0f;
     _pitch = 1.0f;
     _source = SourceType::Impulse;
 
@@ -677,6 +679,8 @@ int MiniVoxJ::synthesize(int16_t* buffer)
     const FormantParams* cur = _formantSegs[_seg_cnt].params;
     const FormantParams* nxt = (_seg_cnt + 1 < _formantSegs.size())
                                 ? _formantSegs[_seg_cnt + 1].params : cur;
+    const FormantParams* prv = (_seg_cnt > 0) ? _formantSegs[_seg_cnt - 1].params : &Silence;
+
     // 処理中のフォルマントの長さ(サンプル数)
     int seg_len = ms2sa((int)((float)_formantSegs[_seg_cnt].t_ms / _speed));
     // ピッチ
@@ -704,6 +708,12 @@ int MiniVoxJ::synthesize(int16_t* buffer)
 
             // ピッチも滑らかにつなぐ
             _pitch = pitch_cur + (pitch_nxt - pitch_cur) * k;
+
+            // 有声音の始まりも滑らかに
+            if(prv->gain == 0.0f || _source != SourceTypeTable[(int)prv->type]){
+                float kg = (t < 0.3f) ? t / 0.3f : 1.0f;
+                _gain *= kg;
+            }
         }
 
         // 励振音源
@@ -741,9 +751,14 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                 cur = _formantSegs[_seg_cnt].params;
                 nxt = (_seg_cnt + 1 < _formantSegs.size())
                     ? _formantSegs[_seg_cnt + 1].params : cur;
+                prv = _formantSegs[_seg_cnt - 1].params;
+
                 seg_len = ms2sa((int)((float)_formantSegs[_seg_cnt].t_ms / _speed));
 
-                // for (Resonator& filter : _resonators) filter.reset();
+                if(prv == &Silence){
+                    // 無音区間からの変化なら一旦リセット
+                    for (Resonator& filter : _resonators) filter.reset();
+                }
             }
         }
     }
