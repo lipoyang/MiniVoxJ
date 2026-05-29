@@ -66,12 +66,12 @@ static constexpr FormantParams ConsN  = { 250, 1700, 2600, 180, 200, 250, 0.3f, 
 static constexpr FormantParams ConsM  = { 250, 1000, 2200, 180, 200, 250, 0.3f, FormantType::Nosal };
 
 // 無声摩擦音 ɕ, s, h, ç, ɸ (シ・ス・ハ・ヒ・フ)
-static constexpr FormantParams ConsSj = { 200, 3800, 6000, 500, 2500, 2000, 0.20f, FormantType::Fricative };
-static constexpr FormantParams ConsS  = { 200, 5500, 7500, 500, 3000, 2000, 0.20f, FormantType::Fricative };
+static constexpr FormantParams ConsSj = { 200, 3800, 6000, 500, 2500, 2000, 0.08f, FormantType::Fricative };
+static constexpr FormantParams ConsS  = { 200, 5500, 7500, 500, 3000, 2000, 0.08f, FormantType::Fricative };
 static constexpr FormantParams ConsHa = { 800, 1200, 2600, 200,  300,  400, 0.15f, FormantType::Fricative };
 static constexpr FormantParams ConsHe = { 500, 1900, 2600, 200,  300,  400, 0.15f, FormantType::Fricative };
 static constexpr FormantParams ConsHo = { 500,  800, 2400, 200,  300,  400, 0.15f, FormantType::Fricative };
-static constexpr FormantParams ConsCh = { 200, 3000, 5000, 500, 2000, 2000, 0.15f, FormantType::Fricative };
+static constexpr FormantParams ConsCh = { 200, 3000, 5000, 500, 2000, 2000, 0.10f, FormantType::Fricative };
 static constexpr FormantParams ConsPh = { 200, 2500, 4000, 500, 3000, 2000, 0.15f, FormantType::Fricative };
 // ※ h は後続の母音によって変種あり
 
@@ -614,13 +614,15 @@ static std::vector<FormantSeg> convertPhrases2FormantSeg(const std::vector<Phras
 // a: 現在のフォルマントパラメータ
 // b: 次のフォルマントパラメータ
 // k: 相補係数 (0～1)
-static FormantParams interpolate(const FormantParams& a, const FormantParams& b, float k)
+static FormantParams interpolate(const FormantParams& a, const FormantParams& b, float t)
 {
     SourceType a_source = SourceTypeTable[(int)a.type];
     SourceType b_source = SourceTypeTable[(int)b.type];
     float f1, f2, f3, bw1, bw2, bw3, gain;
 
     if(a_source == b_source){
+        float k = (t > 0.7f) ? (t - 0.7f) / 0.3f : 0.0f;
+
         f1 = a.f1 + (b.f1 - a.f1) * k;
         f2 = a.f2 + (b.f2 - a.f2) * k;
         f3 = a.f3 + (b.f3 - a.f3) * k;
@@ -629,6 +631,8 @@ static FormantParams interpolate(const FormantParams& a, const FormantParams& b,
         bw3 = a.bw3 + (b.bw3 - a.bw3) * k;
         gain = a.gain + (b.gain - a.gain) * k;
     }else{
+        float k = (t > 0.9f) ? (t - 0.9f) / 0.1f : 0.0f;
+
         f1 = a.f1;
         f2 = a.f2;
         f3 = a.f3;
@@ -707,8 +711,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
         if (_sub_cnt % _SlotLen == 0) {
             // フォルマント区間の終盤では次のフォルマント区間と滑らかにつなぐ補間
             float t = static_cast<float>(_sub_cnt) / seg_len;
-            float k = (t > 0.7f) ? (t - 0.7f) / 0.3f : 0.0f;
-            FormantParams p = interpolate(*cur, *nxt, k);
+            FormantParams p = interpolate(*cur, *nxt, t);
 
             // 共振フィルタ係数とゲインの設定
             const float kf = KF[(int)_voice_type];
@@ -729,6 +732,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
 #endif
 
             // ピッチも滑らかにつなぐ
+            float k = (t > 0.7f) ? (t - 0.7f) / 0.3f : 0.0f;
             _pitch = pitch_cur + (pitch_nxt - pitch_cur) * k;
 #if 1
             // 無音からの始まりも滑らかに
@@ -785,8 +789,8 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                 prv = _formantSegs[_seg_cnt - 1].params;
 
                 seg_len = ms2sa((int)((float)_formantSegs[_seg_cnt].t_ms / _speed));
-#if 1
-                if(prv == &Silence || cur == &Silence){
+#if 0
+                if(prv == &Silence){
                     // 無音区間からの変化なら一旦リセット
                     for (Resonator& filter : _resonators) filter.reset();
                     _impulse.reset();
