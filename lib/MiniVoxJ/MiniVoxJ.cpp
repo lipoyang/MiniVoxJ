@@ -66,12 +66,12 @@ static constexpr FormantParams ConsN  = { 250, 1700, 2600, 180, 200, 250, 0.3f, 
 static constexpr FormantParams ConsM  = { 250, 1000, 2200, 180, 200, 250, 0.3f, FormantType::Nosal };
 
 // 無声摩擦音 ɕ, s, h, ç, ɸ (シ・ス・ハ・ヒ・フ)
-static constexpr FormantParams ConsSj = { 200, 3800, 6000, 500, 2500, 2000, 0.08f, FormantType::Fricative };
-static constexpr FormantParams ConsS  = { 200, 5500, 7500, 500, 3000, 2000, 0.08f, FormantType::Fricative };
+static constexpr FormantParams ConsSj = { 200, 3800, 6000, 500, 2500, 2000, 0.20f, FormantType::Fricative };
+static constexpr FormantParams ConsS  = { 200, 5500, 7500, 500, 3000, 2000, 0.20f, FormantType::Fricative };
 static constexpr FormantParams ConsHa = { 800, 1200, 2600, 200,  300,  400, 0.15f, FormantType::Fricative };
 static constexpr FormantParams ConsHe = { 500, 1900, 2600, 200,  300,  400, 0.15f, FormantType::Fricative };
 static constexpr FormantParams ConsHo = { 500,  800, 2400, 200,  300,  400, 0.15f, FormantType::Fricative };
-static constexpr FormantParams ConsCh = { 200, 3000, 5000, 500, 2000, 2000, 0.10f, FormantType::Fricative };
+static constexpr FormantParams ConsCh = { 200, 3000, 5000, 500, 2000, 2000, 0.15f, FormantType::Fricative };
 static constexpr FormantParams ConsPh = { 200, 2500, 4000, 500, 3000, 2000, 0.15f, FormantType::Fricative };
 // ※ h は後続の母音によって変種あり
 
