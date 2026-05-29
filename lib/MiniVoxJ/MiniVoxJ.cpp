@@ -132,13 +132,13 @@ static constexpr Phone C_W  = { { &ConsW,   60 } }; // w ワ
 static constexpr Phone C_R  = { { &ConsR,   30 } }; // ɾ ラ
 static constexpr Phone C_N  = { { &ConsN,   80 } }; // n ナ
 static constexpr Phone C_M  = { { &ConsM,   80 } }; // m マ
-static constexpr Phone C_Sj = { { &ConsSj, 120 } }; // ɕ シ
-static constexpr Phone C_S  = { { &ConsS,  120 } }; // s ス
-static constexpr Phone C_Ha = { { &ConsHa,  80 } }; // h ハ
-static constexpr Phone C_He = { { &ConsHe,  80 } }; // h ヘ
-static constexpr Phone C_Ho = { { &ConsHo,  80 } }; // h ホ
-static constexpr Phone C_Ch = { { &ConsCh, 100 } }; // ç ヒ
-static constexpr Phone C_Ph = { { &ConsPh, 100 } }; // ɸ フ
+static constexpr Phone C_Sj = { { &Silence, 5 }, { &ConsSj, 115 } }; // ɕ シ
+static constexpr Phone C_S  = { { &Silence, 5 }, { &ConsS,  115 } }; // s ス
+static constexpr Phone C_Ha = { { &Silence, 5 }, { &ConsHa,  75 } }; // h ハ
+static constexpr Phone C_He = { { &Silence, 5 }, { &ConsHe,  75 } }; // h ヘ
+static constexpr Phone C_Ho = { { &Silence, 5 }, { &ConsHo,  75 } }; // h ホ
+static constexpr Phone C_Ch = { { &Silence, 5 }, { &ConsCh,  95 } }; // ç ヒ
+static constexpr Phone C_Ph = { { &Silence, 5 }, { &ConsPh,  95 } }; // ɸ フ
 
 static constexpr Phone C_K = { { &Silence,  80 }, { &BurstK, 10 }, { &VotK, 30 } }; // k カ
 static constexpr Phone C_G = { { &VoiceBar, 60 }, { &BurstK,  5 }, { &VotK,  0 } }; // g ガ
@@ -662,6 +662,7 @@ bool MiniVoxJ::setText(const char* utf8_str, int max)
     _source = SourceType::Impulse;
 
     for (Resonator& filter : _resonators) filter.reset();
+    _impulse.reset();
 
     return true;
 }
@@ -709,10 +710,18 @@ int MiniVoxJ::synthesize(int16_t* buffer)
             // ピッチも滑らかにつなぐ
             _pitch = pitch_cur + (pitch_nxt - pitch_cur) * k;
 
-            // 有声音の始まりも滑らかに
-            if(prv->gain == 0.0f || _source != SourceTypeTable[(int)prv->type]){
+            // 無音からの始まりも滑らかに
+            if(prv->gain == 0.0f){
                 float kg = (t < 0.3f) ? t / 0.3f : 1.0f;
                 _gain *= kg;
+            }
+            // 母音の始まりも滑らかに
+            if((prv->type != FormantType::Vowel && prv->type != FormantType::Semivowel) && 
+               (cur->type == FormantType::Vowel || cur->type == FormantType::Semivowel))
+            {
+                float kg = (t < 0.15f) ? t / 0.15f : 1.0f;
+                float gain = prv->gain + (cur->gain - prv->gain) * kg;
+                _gain *= gain;
             }
         }
 
@@ -758,6 +767,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                 if(prv == &Silence){
                     // 無音区間からの変化なら一旦リセット
                     for (Resonator& filter : _resonators) filter.reset();
+                    _impulse.reset();
                 }
             }
         }

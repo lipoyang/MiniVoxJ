@@ -171,6 +171,10 @@ public:
         }
         return 0.0;
     }
+    // リセット
+    void reset(){
+        phase = 1.0f;
+    }
 private:
     const float fs;    // サンプリング周波数[Hz]
     float phase = 0.0; // 周期内の位相(0～1)
