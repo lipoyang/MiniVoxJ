@@ -45,6 +45,64 @@ int synthesis(VoiceType voice, float speed, const char* text, const char* filena
     return 0;
 }
 
+// 対話/スクリプトコマンドの実行
+// file: 標準入力またはスクリプトファイル
+void executeCommand(FILE* file)
+{
+    VoiceType type = VoiceType::Male;
+    float speed = 1.0f;
+    char buf[1024];
+    char filename[32];
+    char command[32];
+    int fcnt = 0;
+    printf("Interactive mode\n");
+    while (1) {
+        printf("> ");
+        if (fgets(buf, sizeof(buf), file) != NULL) {
+            // vコマンド : 声質設定
+            if (buf[0] == 'v') {
+                int val = buf[1] - '0';
+                if (val >= 0 && val < (int)VoiceType::TypeCount) {
+                    type = (VoiceType)val;
+                    printf("Voice type %d\n", (int)type);
+                }
+            }
+            // sコマンド : 発話速度設定
+            else if (buf[0] == 's') {
+                float val;
+                int ret = sscanf(&buf[1], "%f", &val);
+                if (ret == 1) {
+                    if (val > 0.0f) {
+                        speed = val;
+                        printf("Speed %f\n", speed);
+                    }
+                }
+                else {
+                    printf("sscanf error\n");
+                }
+            }
+            // qコマンド : 終了
+            else if (buf[0] == 'q') {
+                printf("Quit!\n");
+                break;
+            }
+            // それ以外 : 音声合成
+            else {
+                sprintf(filename, "output%d.wav", fcnt);
+                synthesis(type, speed, buf, filename);
+                sprintf(command, "start %s", filename);
+                if(file == stdin) {
+                    system(command);
+                }
+                fcnt++;
+            }
+        }
+        else {
+            break;
+        }
+    }
+}
+
 // メイン関数
 int main(int argc, char const* argv[])
 {
@@ -61,48 +119,16 @@ int main(int argc, char const* argv[])
     // オプション "i" のとき：対話実行
     else if (argv[1][0] == 'i')
     {
-        VoiceType type = VoiceType::Male;
-        float speed = 1.0f;
-        char buf[1024];
-        char filename[32];
-        char command[32];
-        int fcnt = 0;
-        printf("Interactive mode\n");
-        while (1) {
-            printf("> ");
-            if (fgets(buf, sizeof(buf), stdin) != NULL) {
-                // vコマンド : 声質設定
-                if (buf[0] == 'v') {
-                    int val = buf[1] - '0';
-                    if (val >= 0 && val < (int)VoiceType::TypeCount) {
-                        type = (VoiceType)val;
-                        printf("Voice type %d\n", (int)type);
-                    }
-                }
-                // sコマンド : 発話速度設定
-                else if (buf[0] == 's') {
-                    float val;
-                    int ret = sscanf(&buf[1], "%f", &val);
-                    if (ret == 1) {
-                        if (val > 0.0f) {
-                            speed = val;
-                            printf("Speed %f\n", speed);
-                        }
-                    } else {
-                        printf("sscanf error\n");
-                    }
-                }
-                // それ以外 : 音声合成
-                else {
-                    sprintf(filename, "output%d.wav", fcnt);
-                    synthesis(type, speed, buf, filename);
-                    sprintf(command, "start %s", filename);
-                    system(command);
-                    fcnt++;
-                }
-            }
-        }
+        executeCommand(stdin);
     }
-
+    // オプション "s" のとき：スクリプト実行
+    else if (argv[1][0] == 's')
+    {
+        FILE* file = fopen("script.txt", "r");
+        if (file == NULL) {
+            printf("Failed to open script.txt\n");
+        }
+        executeCommand(file);
+    }
     return 0;
 }
