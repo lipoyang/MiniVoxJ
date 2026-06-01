@@ -8,7 +8,7 @@
     定数・テーブル
  **********************************************************/
 
-constexpr float Amp = 0.5f * 32767.0f; // 振幅
+constexpr float Amp = 1.0f * 32767.0f; // 振幅
 constexpr float F0[] = {160.0f, 220.0f, 280.0f, 330.0f}; // 基本周波数
 constexpr float KF[] = {  1.0f,   1.15f,  1.3f,   1.5f}; // フォルマント周波数の倍率
 constexpr int   MoraLen = 180; // モーラの長さ[msec]
@@ -48,7 +48,7 @@ static constexpr Mora KANA_TO_MORA[83] = {
 //********** フォルマントパラメータ **********
 
 // 母音 a,i,ɯ,e,o
-static constexpr FormantParams VowelA = { 800, 1200, 2600, 80, 100, 120, 1.0f, FormantType::Vowel };
+static constexpr FormantParams VowelA = { 800, 1200, 2600, 80, 100, 120, 0.7f, FormantType::Vowel };
 static constexpr FormantParams VowelI = { 300, 2300, 3000, 80, 120, 150, 1.0f, FormantType::Vowel };
 static constexpr FormantParams VowelU = { 350, 1300, 2500, 80, 100, 120, 1.0f, FormantType::Vowel };
 static constexpr FormantParams VowelE = { 500, 1900, 2600, 80, 100, 120, 1.0f, FormantType::Vowel };
@@ -507,8 +507,8 @@ static int formantSegAdd(std::vector<FormantSeg> &segs, const Phone &phone, floa
     return len;
 }
 
-// モーラ列をフォルマント区間列に変換
-// moras: モーラ列
+// アクセント句のモーラ列をフォルマント区間列に変換
+// moras: アクセント句のモーラ列
 // pitches: ピッチ列
 // returns: フォルマント区間列
 static std::vector<FormantSeg> convertMora2FormantSeg(const std::vector<Mora>& moras, const std::vector<float>& pitches)
@@ -698,6 +698,13 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                                 ? _formantSegs[_seg_cnt + 1].params : cur;
     const FormantParams* prv = (_seg_cnt > 0) ? _formantSegs[_seg_cnt - 1].params : &Silence;
 
+    bool vowel_suppress = false;
+    if(prv->type == FormantType::Vowel || prv->type == FormantType::Semivowel){
+        if(cur->type == FormantType::Vowel || prv->type == FormantType::Semivowel){
+            vowel_suppress = true;
+        }
+    }
+
     // 処理中のフォルマントの長さ(サンプル数)
     int seg_len = ms2sa((int)((float)_formantSegs[_seg_cnt].t_ms / _speed));
     // ピッチ
@@ -722,6 +729,7 @@ int MiniVoxJ::synthesize(int16_t* buffer)
             _gain = p.gain;
             _source = SourceTypeTable[(int)p.type];
             _formant_type = p.type;
+            if(vowel_suppress) _gain *= 0.7f;
 #else
             _resonators[0].set(cur->f1 * kf, cur->bw1);
             _resonators[1].set(cur->f2 * kf, cur->bw2);
@@ -787,6 +795,13 @@ int MiniVoxJ::synthesize(int16_t* buffer)
                 nxt = (_seg_cnt + 1 < _formantSegs.size())
                     ? _formantSegs[_seg_cnt + 1].params : cur;
                 prv = _formantSegs[_seg_cnt - 1].params;
+
+                vowel_suppress = false;
+                if(prv->type == FormantType::Vowel || prv->type == FormantType::Semivowel){
+                    if(cur->type == FormantType::Vowel || prv->type == FormantType::Semivowel){
+                        vowel_suppress = true;
+                    }
+                }
 
                 seg_len = ms2sa((int)((float)_formantSegs[_seg_cnt].t_ms / _speed));
 #if 0
