@@ -111,7 +111,7 @@ void I2sAudioOut::begin(I2sAudioPins& pins, int sampleRate, int bufferSize, int 
 
     // SCK(BCLK) と LRCLK(WS) は隣りあうピンでないといけない
     if(pins.WS != pins.SCK + 1){
-        printf("Bad WS pin number! (SCK=%d, WS=%d)\n", pins.SCK, pins.SD);
+        printf("Bad WS pin number! (SCK=%d, WS=%d)\n", pins.SCK, pins.WS);
         return;
     }
 
